@@ -369,25 +369,25 @@
         indicator     = {mcusr_bits_porf},                 "Power-On RST",     "Power-On RST",     white,  black,  green,  black
         indicator     = {mcusr_bits_extrf},                "External RST",     "External RST",     white,  black,  green,  black
         indicator     = {mcusr_bits_borf},                 "Brownout RST",     "Brownout RST",     white,  black,  red,    black
-        indicator     = {mcusr_bits_wdrf},                 "Watchdog RST",     "Watchdog RST",     white,  black,  reg,    black
+        indicator     = {mcusr_bits_wdrf},                 "Watchdog RST",     "Watchdog RST",     white,  black,  red,    black
     
     dialog = diagMCU_StatusControl, "MCU Status/Control", yAxis
         panel = indsMCU_RST
         commandButton = "Soft Reset", cmdSoftReset
     
     indicatorPanel = indsThrottleEnables, 4, {1}; 4 cols, enabled
-        indicator     = {tVars_status_throttleEnabled},    "THROTTLE DISABLED","THROTTLE ENABLED", red,    black,  green,  black
-        indicator     = {tVars_status_motorEnabled},       "MOTOR DISABLED",   "MOTOR ENABLED",    red,    black,  green,  black
+        indicator     = {tVars_status_throttleEnabled},    "THROTTLE DISABLED","THROTTLE ENABLED", yellow, black,  green,  black
+        indicator     = {tVars_status_motorEnabled},       "MOTOR DISABLED",   "MOTOR ENABLED",    yellow, black,  green,  black
     
     dialog = diagThrottleEnables, "Throttle Enables", yAxis
         field = "Throttle Inhibit", throttleCtrl_bits_throttleInhibit
         panel = indsThrottleEnables
     
     indicatorPanel = indsThrottleFaults, 4, {1}; 4 cols, enabled
+        indicator     = {tVars_status_adcStalled},         "ADC Running",      "ADC Stalled",      green,  black,  red,    black
+        indicator     = {tVars_status_motorDriverFault},   "Driver OK",        "Driver FAULT",     green,  black,  red,    black
         indicator     = {tVars_status_ppsComparisonFault}, "PPS Comp OK",      "PPS Comp FAULT",   green,  black,  red,    black
         indicator     = {tVars_status_tpsComparisonFault}, "TPS Comp OK",      "TPS Comp FAULT",   green,  black,  red,    black
-        indicator     = {tVars_status_motorDriverFault},   "Driver OK",        "Driver FAULT",     green,  black,  red,    black
-        indicator     = {tVars_status_adcStalled},         "ADC Running",      "ADC Stalled",      green,  black,  red,    black
 
     dialog = diagClrFaultBtns, "", xAxis
         commandButton = "Clear All Faults", cmdClrAllFaults
@@ -472,9 +472,9 @@
     indicator     = {mcusr_bits_porf},                 "Power-On RST",     "Power-On RST",     white,  black,  green,  black
     indicator     = {mcusr_bits_extrf},                "External RST",     "External RST",     white,  black,  green,  black
     indicator     = {mcusr_bits_borf},                 "Brownout RST",     "Brownout RST",     white,  black,  red,    black
-    indicator     = {mcusr_bits_wdrf},                 "Watchdog RST",     "Watchdog RST",     white,  black,  reg,    black
-    indicator     = {tVars_status_throttleEnabled},    "THROTTLE DISABLED","THROTTLE ENABLED", red,    black,  green,  black
-    indicator     = {tVars_status_motorEnabled},       "MOTOR DISABLED",   "MOTOR ENABLED",    red,    black,  green,  black
+    indicator     = {mcusr_bits_wdrf},                 "Watchdog RST",     "Watchdog RST",     white,  black,  red,    black
+    indicator     = {tVars_status_throttleEnabled},    "THROTTLE DISABLED","THROTTLE ENABLED", yellow, black,  green,  black
+    indicator     = {tVars_status_motorEnabled},       "MOTOR DISABLED",   "MOTOR ENABLED",    yellow, black,  green,  black
     indicator     = {tVars_status_ppsComparisonFault}, "PPS Comp OK",      "PPS Comp FAULT",   green,  black,  red,    black
     indicator     = {tVars_status_tpsComparisonFault}, "TPS Comp OK",      "TPS Comp FAULT",   green,  black,  red,    black
     indicator     = {tVars_status_motorDriverFault},   "Driver OK",        "Driver FAULT",     green,  black,  red,    black

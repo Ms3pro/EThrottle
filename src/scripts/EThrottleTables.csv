@@ -64,6 +64,7 @@ int16_t,ppsAdder,,,,portion of tps target from pedal position,,%,0.01,0,0,100,2,
 uint16_t,driverFB,,,,motor driver current feedback ADC value (raw),,ADC,1,0,adcMin,adcMax,,,,Sensors,driverFB,adcMin,adcMin,adcMax,adcMax,0,0
 uint8_t,ppsCompFaultCount,,,,PPS comparison fault counter (wraps),,,1,0,0,maxU08,,,,Status,PPS Comp Fault Count,-10,-10,10,20,0,0
 uint8_t,tpsCompFaultCount,,,,TPS comparison fault counter (wraps),,,1,0,0,maxU08,,,,Status,TPS Comp Fault Count,-10,-10,10,20,0,0
+uint8_t,driverFaultCount,,,,Motor driver fault counter (wraps),,,1,0,0,maxU08,,,,Status,Motor Driver Fault Count,-10,-10,10,20,0,0
 ,,,,,,,,,,,,,,,,,,,,,,
 struct,RangeCalibration,,,,,,,,,,,,,,,,,,,,,
 uint16_t,min,,,,,,ADC,1,0,adcMin,adcMax,,,,,,,,,,,
@@ -147,7 +148,7 @@ Status0_T,status0,,,,,,,,,,,,,,,,,,,,,
 MCUSR_Status,mcusr,,,,,,,,,,,,,,,,,,,,,
 ThrottleOutVars_T,tVars,,,,,,,,,,,,,,,,,,,,,
 ADC_Status_T,adcStatus,,,,,,,,,,,,,,,,,,,,,
-uint8_t,reserved,,,88,,,,,,,,,,,,,,,,,,
+uint8_t,reserved,,,87,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,
 struct,Page1_T,,,,,1,,,,,,,,,,,,,,,,
 ThrottleControl,throttleCtrl,,,,,,,,,,,,,,,,,,,,,

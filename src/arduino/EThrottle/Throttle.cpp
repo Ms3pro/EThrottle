@@ -133,14 +133,14 @@ void
 Throttle::disableThrottle()
 {
   status_.throttleEnabled = 0;
-  disableMotor();
+  driverDisable();
 }
 
 void
 Throttle::enableThrottle()
 {
   status_.throttleEnabled = 1;
-  enableMotor();
+  driverEnable();
 }
 
 void
@@ -224,25 +224,21 @@ void
 Throttle::clearFault(
   Throttle::FaultClearCmd_E cmd)
 {
-  const bool clrAll = cmd == FaultClearCmd_E::eFCC_All;
+  const bool clrAll = cmd == FaultClearCmd_E::All;
 
-  if (clrAll || cmd == FaultClearCmd_E::eFCC_PPS)
+  if (clrAll || cmd == FaultClearCmd_E::PPS)
   {
     status_.ppsComparisonFault = 0;
     ppsFaultFilter_.reset();
   }
-  if (clrAll || cmd == FaultClearCmd_E::eFCC_TPS)
+  if (clrAll || cmd == FaultClearCmd_E::TPS)
   {
     status_.tpsComparisonFault = 0;
     tpsFaultFilter_.reset();
   }
-  if ((clrAll || cmd == FaultClearCmd_E::eFCC_Driver) && status_.motorDriverFault)
+  if (clrAll || cmd == FaultClearCmd_E::Driver)
   {
-    // MC33887 fault status is sticky
-    // need to disable/enable motor to clear
-    disableMotor();
-    enableMotor();
-    status_.motorDriverFault = 0;
+    driverClearFault();
   }
 }
 
@@ -321,20 +317,29 @@ Throttle::stopPID_AutoTune()
 }
 
 void
-Throttle::disableMotor()
+Throttle::driverDisable()
 {
   digitalWrite(driverPinDis_, 1);
   status_.motorEnabled = 0;
 }
 
 void
-Throttle::enableMotor()
+Throttle::driverEnable()
 {
   if (status_.throttleEnabled)
   {
     digitalWrite(driverPinDis_, 0);
     status_.motorEnabled = 1;
   }
+}
+
+void
+Throttle::driverClearFault()
+{
+  // MC33887 fault status is sticky
+  // need to disable/enable motor to clear
+  driverDisable();
+  driverEnable();
 }
 
 void
@@ -454,12 +459,12 @@ Throttle::doThrottle()
     const ModeWithTransition mwt = tpsFaultFilter_.process(faulted);
     if (mwt.mode == FaultMode_E::eFM_LongTerm)
     {
-      disableMotor();
+      driverDisable();
       status_.tpsComparisonFault = 1;
     }
     else if (mwt.mode == FaultMode_E::eFM_Nominal && mwt.transition)
     {
-      enableMotor();
+      driverEnable();
       status_.tpsComparisonFault = 0;
     }
   }
@@ -539,7 +544,7 @@ Throttle::doThrottle()
     if (deltaCycles == 0)
     {
       status_.adcStalled = 1;
-      disableMotor();
+      driverDisable();
     }
   }
 
@@ -548,10 +553,17 @@ Throttle::doThrottle()
   // pin if the driver is in the disabled state. Since we sometimes disable the
   // motor driver on purpose, I'm checking that we intentionally have the motor
   // in the enabled state before flagging a fault.
-  if (status_.motorEnabled && digitalRead(driverPinFS_) == 0)
+  const bool liveMotorDriverFault = status_.motorEnabled && digitalRead(driverPinFS_) == 0;
+  if (liveMotorDriverFault)
   {
-    status_.motorDriverFault = 1;
+    driverClearFault();
+    if (status_.motorDriverFault == 0)
+    {
+      // only increment counter upon entering fault condition
+      outVars_->driverFaultCount++;
+    }
   }
+  status_.motorDriverFault = liveMotorDriverFault;
 
   // drive motor outputs
 #ifdef SUPPORT_H_BRIDGE

@@ -37,12 +37,12 @@ public:
     uint8_t nBins;
   };
 
-  enum FaultClearCmd_E
+  enum struct FaultClearCmd_E
   {
-    eFCC_All = 'A',
-    eFCC_Driver = 'd',
-    eFCC_PPS = 'p',
-    eFCC_TPS = 't',
+    All = 'A',
+    Driver = 'd',
+    PPS = 'p',
+    TPS = 't',
   };
 
 public:
@@ -155,10 +155,13 @@ public:
 
 private:
   void
-  disableMotor();
+  driverDisable();
 
   void
-  enableMotor();
+  driverEnable();
+
+  void
+  driverClearFault();
 
   void
   doPedal();
