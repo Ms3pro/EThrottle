@@ -43,13 +43,16 @@ TL_COL_ENUM_NAME = 4
 DEFAULT_INDENT = "    "
 
 TRIVIAL_TYPE_LUT = {
-	'uint8_t' : {'size_bytes' : 1, 'ini_type' : 'U08'},
-	'int8_t' : {'size_bytes' : 1, 'ini_type' : 'S08'},
+	'uint8_t'  : {'size_bytes' : 1, 'ini_type' : 'U08'},
+	'int8_t'   : {'size_bytes' : 1, 'ini_type' : 'S08'},
 	'uint16_t' : {'size_bytes' : 2, 'ini_type' : 'U16'},
-	'int16_t' : {'size_bytes' : 2, 'ini_type' : 'S16'},
+	'int16_t'  : {'size_bytes' : 2, 'ini_type' : 'S16'},
 	'uint32_t' : {'size_bytes' : 4, 'ini_type' : 'U32'},
-	'int32_t' : {'size_bytes' : 4, 'ini_type' : 'S21'}
+	'int32_t'  : {'size_bytes' : 4, 'ini_type' : 'S21'}
 }
+
+MAX_FLASH_TABLE_SIZE = 128
+AUTO_PAD_TABLES = True
 
 def is_constant_type(type_name):
 	return type_name.startswith("const")
@@ -499,9 +502,37 @@ class Namespace(object):
 		else:
 			raise RuntimeError("unsupported type_name '%s'" % (row_obj.type_name))
 		
-	def finalize(self):
+	def finalize(self, table_list):
+		# add the last type we were parsing
 		if self._curr_type:
 			self.add_type(self._curr_type)
+			self._curr_type = None
+		
+		# process list of tables and pad out the table struct definitions
+		# to make them meet the table size requirements.
+		for idx, row in enumerate(table_list):
+			if len(row[TL_COL_TYPE]) == 0:
+				continue # table doesn't have a struct type (probably a special cmd table)
+			
+			table_type_name = row[TL_COL_TYPE]
+			table_type = self.get_type_by_name(table_type_name)
+			table_size = traverse_members(table_type, self, None)
+			if table_size > MAX_FLASH_TABLE_SIZE:
+				raise RuntimeError(f"'{table_type_name}' size={table_size}. exceeds MAX_FLASH_TABLE_SIZE ({MAX_FLASH_TABLE_SIZE})")
+			pad_bytes = MAX_FLASH_TABLE_SIZE - table_size
+			if AUTO_PAD_TABLES and pad_bytes > 0:
+				pad_row = RowObject(
+					self, [
+						'uint8_t', # type
+						'__tablePad', # name
+						'', # bitWidth
+						'', # constValue
+						str(pad_bytes), # arraySize
+						f'auto-added member to pad this table struct to {MAX_FLASH_TABLE_SIZE} bytes', # codeComment
+						'','','','','','','','','','','','','','','','','','','','','','','',''
+					]
+				)
+				table_type.add_member(pad_row)
 
 def write_header_file(args, nspace, table_list):
 	out_file_h = args.out_file_h
@@ -875,7 +906,7 @@ def main():
 		elif parse_mode == ParseMode.TableList:
 			table_list.append(row)
 
-	nspace.finalize()
+	nspace.finalize(table_list)
 
 	write_header_file(args, nspace, table_list)
 	write_ini_file(args, nspace)
