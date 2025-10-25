@@ -181,10 +181,19 @@
 
 ; -----------------------------------------------------------
 [SettingContextHelp]
+    ppsCalA_min = "Set this the PPS A sensor reading when the accelearator pedal is at 0%."
+    ppsCalA_max = "Set this the PPS A sensor reading when the accelearator pedal is at 100%."
+    ppsCalB_min = "Set this the PPS B sensor reading when the accelearator pedal is at 0%."
+    ppsCalB_max = "Set this the PPS B sensor reading when the accelearator pedal is at 100%."
+    tpsCalA_min = "Set this the TPS A sensor reading when the accelearator pedal is at 0%."
+    tpsCalA_max = "Set this the TPS A sensor reading when the accelearator pedal is at 100%."
+    tpsCalB_min = "Set this the TPS B sensor reading when the accelearator pedal is at 0%."
+    tpsCalB_max = "Set this the TPS B sensor reading when the accelearator pedal is at 100%."
+    sensorSetup_bits_preferPPS_A = "Set this to the PPS sensor that provides values over the full range of the accelerator pedal.\nSome pedals will hit min/max ADC readings earlier than expected."
     sensorSetup_bits_comparePPS = "Enable/disable safety feature that compares redundant PPS sensors A and B.\nAfter enabling this feature, config the PPS comparison curve."
-    sensorSetup_bits_preferPPS_A = "Set this to the PPS sensor that provides values over the full range of the accelrator pedal.\nSome pedals will hit min/max ADC readings earlier than expected."
     sensorSetup_bits_compareTPS = "Enable/disable safety feature that compares redundant TPS sensors A and B.\nAfter enabling this feature, config the TPS comparison curve."
     sensorSetup_bits_preferTPS_A = "Set this to the TPS sensor that provides values over the full range of the throttle blade.\nSome throttles will hit min/max ADC readings earlier than expected."
+    throttleCtrl_bits_throttleInhibit = "Enable/Disable the throttle controller. If disabled, the motor driver outputs will be OFF, allowing you to manually move the throttle blade."
     ppsCompareThresh = "Threshold driving the PPS A/B comparison logic.\nThe algorithm will lookup an expected ADC reading for the 'secondary' sensor, given the prefered\n'primary' sensor's ADC. If the expected value differs the actual value by more than this threshold, then\na PPS sensor fault will be flagged, and the PPS position will default to 0%."
     tpsCompareThresh = "Threshold driving the TPS A/B comparison logic.\nThe algorithm will lookup an expected ADC reading for the 'secondary' sensor, given the prefered\n'primary' sensor's ADC. If the expected value differs the actual value by more than this threshold, then\na TPS sensor fault will be flagged, and the throttle motor will be disabled."
     tpsStall = "Minimum tps value that the engine can continue to run at.\nGoing below this tps value will cause the engine to stall."
@@ -221,11 +230,12 @@
         menu = "Basic/Load Settings"
             subMenu = ppsRangeCal, "PPS Range Calibration"
             subMenu = tpsRangeCal, "TPS Range Calibration"
-            subMenu = sensorSetup, "Sensor Setup"
-            subMenu = ppsCompareCurvePreferA, "PPS Comparison Curve (A prefered)", {(sensorSetup_bits_comparePPS) && (sensorSetup_bits_preferPPS_A == 1)}
-            subMenu = ppsCompareCurvePreferB, "PPS Comparison Curve (B prefered)", {(sensorSetup_bits_comparePPS) && (sensorSetup_bits_preferPPS_A == 0)}
-            subMenu = tpsCompareCurvePreferA, "TPS Comparison Curve (A prefered)", {(sensorSetup_bits_compareTPS) && (sensorSetup_bits_preferTPS_A == 1)}
-            subMenu = tpsCompareCurvePreferB, "TPS Comparison Curve (B prefered)", {(sensorSetup_bits_compareTPS) && (sensorSetup_bits_preferTPS_A == 0)}
+            subMenu = std_separator
+            subMenu = sensorSafetySetup, "Sensor Safety Settings"
+            subMenu = ppsComparePreferA, "PPS Comparison Curve (A prefered)", {(sensorSetup_bits_comparePPS) && (sensorSetup_bits_preferPPS_A == 1)}
+            subMenu = ppsComparePreferB, "PPS Comparison Curve (B prefered)", {(sensorSetup_bits_comparePPS) && (sensorSetup_bits_preferPPS_A == 0)}
+            subMenu = tpsComparePreferA, "TPS Comparison Curve (A prefered)", {(sensorSetup_bits_compareTPS) && (sensorSetup_bits_preferTPS_A == 1)}
+            subMenu = tpsComparePreferB, "TPS Comparison Curve (B prefered)", {(sensorSetup_bits_compareTPS) && (sensorSetup_bits_preferTPS_A == 0)}
             subMenu = std_separator
             subMenu = throttlePID_Control, "Throttle PID Control"
             subMenu = std_separator
@@ -264,11 +274,6 @@
         field = "Compare TPS Sensors",  sensorSetup_bits_compareTPS
         field = "TPS Threshold", tpsCompareThresh, {sensorSetup_bits_compareTPS}
 
-    dialog = sensorSetup, "General Settings", yAxis
-        field = "Prefered PPS Sensor",  sensorSetup_bits_preferPPS_A
-        field = "Prefered TPS Sensor",  sensorSetup_bits_preferTPS_A
-        panel = sensorSafetySetup
-
     dialog = throttle_pid_coeffs, "Throttle PID Coefficients"
         slider = "Throttle PID (Kp)",  throttleKp
         slider = "Throttle PID (Ki)",  throttleKi
@@ -284,6 +289,7 @@
         panel = throttle_pid_coeffs
 
     dialog = ppsCalRange
+        field = "Prefered PPS Sensor",  sensorSetup_bits_preferPPS_A
         field = "PPS A Min",  ppsCalA_min
         field = "PPS A Max",  ppsCalA_max
         field = "PPS B Min",  ppsCalB_min
@@ -297,6 +303,7 @@
 
     dialog = tpsCalRange
         field = "Throttle Inhibit", throttleCtrl_bits_throttleInhibit
+        field = "Prefered TPS Sensor",  sensorSetup_bits_preferTPS_A
         field = "TPS A Min",  tpsCalA_min
         field = "TPS A Max",  tpsCalA_max
         field = "TPS B Min",  tpsCalB_min
@@ -403,6 +410,34 @@
         panel = diagMCU_StatusControl
         panel = diagThrottleEnables
         panel = diagThrottleFaults
+        
+    dialog = ppsCompareGraph, "", yAxis
+        liveGraph = timePpsCompareGraph, ""
+            graphLine = tVars_ppsA, "ADC"
+            graphLine = tVars_ppsB, "ADC"
+            graphLine = tVars_ppsSafetyDelta, "ADC", 0, 0, auto, auto
+    
+    dialog = ppsComparePreferA, "PPS B vs. A Comparison Curve", yAxis
+        panel = ppsCompareGraph
+        panel = ppsCompareCurvePreferA
+    
+    dialog = ppsComparePreferB, "PPS A vs. B Comparison Curve", yAxis
+        panel = ppsCompareGraph
+        panel = ppsCompareCurvePreferB
+        
+    dialog = tpsCompareGraph, "", yAxis
+        liveGraph = timeTpsCompareGraph, ""
+            graphLine = tVars_tpsA, "ADC"
+            graphLine = tVars_tpsB, "ADC"
+            graphLine = tVars_tpsSafetyDelta, "ADC", 0, 0, auto, auto
+    
+    dialog = tpsComparePreferA, "TPS B vs. A Comparison Curve", yAxis
+        panel = tpsCompareGraph
+        panel = tpsCompareCurvePreferA
+    
+    dialog = tpsComparePreferB, "TPS A vs. B Comparison Curve", yAxis
+        panel = tpsCompareGraph
+        panel = tpsCompareCurvePreferB
 
 ;-------------------------------------------------------------------------------
 
@@ -429,7 +464,7 @@
         yAxis       = {adcMin}, {adcMax}, 4
         xBins       = tpsCompCurve_xBins, tVars_tpsA
         yBins       = tpsCompCurve_yBins
-        gauge       = tVars_tpsB
+        gauge       = tVars_tpsSafetyDeltaGauge
 
     curve = tpsCompareCurvePreferB, "TPS A vs. B Comparison Curve"
         columnLabel = "TPS B", "TPS A" 
@@ -437,7 +472,7 @@
         yAxis       = {adcMin}, {adcMax}, 4
         xBins       = tpsCompCurve_xBins, tVars_tpsB
         yBins       = tpsCompCurve_yBins
-        gauge       = tVars_tpsA
+        gauge       = tVars_tpsSafetyDeltaGauge
 
 [TableEditor]
 
