@@ -28,19 +28,7 @@ Throttle::Throttle(
  , driverPinN_(driverPinN)
  , driverPinDis_(driverPinDis)
  , driverPinFS_(driverPinFS)
- , tpsTarget_(0)
- , tpsStall_(0)
- , idleAdder_(0)
- , ppsAdder_(0)
- , motorOut_(0)
- , outVars_(nullptr)
- , pidSampleRate_ms_(100)
  , pid_(&pidIn_,&pidOut_,&pidSetpoint_,0,0,0, DIRECT)
- , setpointSource_(SetpointSource::PPS)
- , userSetpoint_(0)
- , sensorSetup_()
- , ppsCompareThresh_(50)
- , tpsCompareThresh_(50)
 {
   // setup ADC measurements
   adc::tpsA.adcMUX = 0;// A0
@@ -195,6 +183,20 @@ Throttle::setSensorSetup(
   ppsCompareThresh_ = ppsCompareThresh;
   tpsCompareThresh_ = tpsCompareThresh;
   tpsStall_ = tpsStall;
+}
+  
+void
+Throttle::setIdleAddAthority(
+  const uint8_t idleAddAthority)
+{
+  idleAddAthority_ = min(idleAddAthority, MAX_IDLE_ADDER_AUTHORITY);
+}
+
+void
+Throttle::setIdleAddFactor(
+  const uint16_t idleAddFactor)
+{
+  idleAddFactor_ = min(idleAddFactor, 10000u);
 }
 
 void
@@ -485,7 +487,8 @@ Throttle::doThrottle()
     {
       case SetpointSource::PPS:
       {
-        ppsAdder_ = ((int32_t)(10000 - tpsStall_ - idleAdder_) * pps_) / 10000;
+        idleAdder_ = static_cast<uint32_t>(idleAddAthority_) * idleAddFactor_ / 100u;
+        ppsAdder_ = (static_cast<int32_t>(10000 - tpsStall_ - idleAdder_) * pps_) / 10000;
         tpsTarget_ = tpsStall_ + idleAdder_ + ppsAdder_;
         break;
       }
@@ -494,8 +497,9 @@ Throttle::doThrottle()
         break;
     }
 
-    // don't let tps target go below the stall point
+    // don't let tps target go below the stall point or above 100%
     tpsTarget_ = max(tpsStall_, tpsTarget_);
+    tpsTarget_ = min(static_cast<int16_t>(10000u), tpsTarget_);
 
     pidSetpoint_ = tpsTarget_;  
     pidIn_ = tps_;
@@ -632,9 +636,10 @@ Throttle::doMotorCurrent()
 }
 
 void
-loadThrottlePID_FromFlash(
+loadFlashPage1ToThrottle(
   Throttle &throttle)
 {
+  // misc. control params
   ThrottleControl tCtrl;
   tCtrl.word = EEPROM.read(FIELD_OFFSET_CFG_PAGE1(throttleCtrl));
   if (tCtrl.bits.throttleInhibit)
@@ -645,28 +650,16 @@ loadThrottlePID_FromFlash(
   {
     throttle.enableThrottle();
   }
+  throttle.setIdleAddAthority(EEPROM.read(FIELD_OFFSET_CFG_PAGE1(idleAddAthority)));
 
+  // PID coefs.
   throttle.updatePID_Coeffs(
     FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKp)) / 100.0,
     FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKi)) / 100.0,
     FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKd)) / 100.0);
-}
 
-void
-storeThrottlePID_ToFlash(
-  Throttle &throttle)
-{
-  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKp), (uint16_t)(throttle.getKp() * 100.0));
-  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKi), (uint16_t)(throttle.getKi() * 100.0));
-  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKd), (uint16_t)(throttle.getKd() * 100.0));
-}
-
-void
-loadSensorCalibrationsFromFlash(
-  Throttle &throttle)
-{
+  // sensor range calibrations
   RangeCalibration rc;
-
   rc.min = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalA.min));
   rc.max = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalA.max));
   throttle.setRangeCalPPS_A(rc);
@@ -679,12 +672,8 @@ loadSensorCalibrationsFromFlash(
   rc.min = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalB.min));
   rc.max = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalB.max));
   throttle.setRangeCalTPS_B(rc);
-}
 
-void
-loadSensorSetupFromFlash(
-  Throttle &throttle)
-{
+  // load sensor setup
   SensorSetupUnion setupU;
   setupU.word = EEPROM.read(FIELD_OFFSET_CFG_PAGE1(sensorSetup.word));
 
@@ -705,4 +694,13 @@ loadSensorSetupFromFlash(
     FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCompareThresh)),
     FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCompareThresh)),
     FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsStall)));
+}
+
+void
+storeThrottlePID_ToFlash(
+  Throttle &throttle)
+{
+  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKp), (uint16_t)(throttle.getKp() * 100.0));
+  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKi), (uint16_t)(throttle.getKi() * 100.0));
+  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKd), (uint16_t)(throttle.getKd() * 100.0));
 }

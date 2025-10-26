@@ -9,6 +9,7 @@ const uint16_t,maxU16,,65535,,max value of a 16bit unsigned integer,,,,,,,,,,,,,
 const int16_t,minS16,,-32768,,min value of a 16bit signed integer,,,,,,,,,,,,,,,,,
 const int16_t,maxS16,,32767,,max value of a 16bit signed integer,,,,,,,,,,,,,,,,,
 const uint8_t,SENSOR_COMPARE_CURVE_N_BINS,,4,,,,,,,,,,,,,,,,,,,
+const uint8_t,MAX_IDLE_ADDER_AUTHORITY,,20,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,
 bitfield,Status0Bits_T,,,,,,,,,,,,,,,,,,,,,
@@ -59,7 +60,7 @@ uint16_t,motorCurrent_mA,,,,motor current,,mA,1,0,0,3000,,,,Sensors,Motor Curren
 ThrottleStatus_T,status,,,,status register for throttle PID,,,,,,,,,,,,,,,,,
 int16_t,ppsSafetyDelta,,,,delta in the redundant PPS sensor comparison,,ADC,1,0,-1023,1023,,,,Calculations,PPS Safety Delta,-60,-30,30,60,0,0
 int16_t,tpsSafetyDelta,,,,delta in the redundant TPS sensor comparison,,ADC,1,0,-1023,1023,,,,Calculations,TPS Safety Delta,-60,-30,30,60,0,0
-int16_t,idleAdder,,,,portion of tps target from idle control,,%,0.01,0,0,100,2,1,Idle Adder,Calculations,Idle Adder,-10,-10,110,110,0,0
+uint16_t,idleAdder,,,,portion of tps target from idle control,,%,0.01,0,0,100,2,1,Idle Adder,Calculations,Idle Adder,-10,-10,110,110,0,0
 int16_t,ppsAdder,,,,portion of tps target from pedal position,,%,0.01,0,0,100,2,1,PPS Adder,Calculations,PPS Adder,-10,-10,110,110,0,0
 uint16_t,driverFB,,,,motor driver current feedback ADC value (raw),,ADC,1,0,adcMin,adcMax,,,,Sensors,driverFB,adcMin,adcMin,adcMax,adcMax,0,0
 uint8_t,ppsCompFaultCount,,,,PPS comparison fault counter (wraps),,,1,0,0,maxU08,,,,Status,PPS Comp Fault Count,-10,-10,10,20,0,0
@@ -166,6 +167,7 @@ uint16_t,tpsCompCurve_yBins,,,SENSOR_COMPARE_CURVE_N_BINS,,,ADC,1,0,adcMin,adcMa
 uint16_t,ppsCompareThresh,,,,,,ADC,1,0,adcMin,adcMax,0,,,,,,,,,,
 uint16_t,tpsCompareThresh,,,,,,ADC,1,0,adcMin,adcMax,0,,,,,,,,,,
 uint16_t,tpsStall,,,,,,%,0.01,0,0,100,2,,,,,,,,,,
+int8_t,idleAddAthority,,,,,,%,1,0,0,MAX_IDLE_ADDER_AUTHORITY,0,,,,,,,,,,
 uint16_t,msqRtBcastBaseId,,,,,,,1,0,0,2047,0,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,
 struct,Page2_T,,,,,2,,,,,,,,,,,,,,,,

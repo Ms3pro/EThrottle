@@ -4,6 +4,7 @@
 #include "adc_ctrl.h"
 #include "can.h"
 #include "config.h"
+#include "ecu_vars.h"
 #include <EndianUtils.h>
 #include <logging_impl_lite.h>
 #include "Throttle.h"
@@ -68,9 +69,7 @@ void setup() {
 #endif
 
   throttle.init(PID_SAMPLE_RATE_MS, throttleVars);
-  loadThrottlePID_FromFlash(throttle);
-  loadSensorCalibrationsFromFlash(throttle);
-  loadSensorSetupFromFlash(throttle);
+  loadFlashPage1ToThrottle(throttle);
 
   canSetup();
 
@@ -82,6 +81,7 @@ void loop() {
   uint32_t loopStartTimeUs = micros();
 
   canLoop();
+  throttle.setIdleAddFactor(ecu::idleDuty); // TODO add logic to detect if CAN comms is healthy
   throttle.run();
 
   // update ADC status
@@ -89,6 +89,12 @@ void loop() {
   outPC.adcStatus.state = static_cast<uint8_t>(adc::getState());
   outPC.adcStatus.convCycles = adc::conversionCycles;
   outPC.adcStatus.adcsra = ADCSRA;
+
+  DEBUG(
+    "seconds=%d; rpm=%d; idleDuty=%d;",
+    ecu::seconds,
+    ecu::rpm,
+    ecu::idleDuty);
 
   // update loop time register
   uint16_t loopTimeUs = micros() - loopStartTimeUs;

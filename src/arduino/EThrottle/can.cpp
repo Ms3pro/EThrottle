@@ -50,9 +50,7 @@ onTableBurned(
   const auto tableId = static_cast<TableId>(table);
   if (tableId == TableId::CFG_PAGE1)
   {
-    loadThrottlePID_FromFlash(throttle);
-    loadSensorCalibrationsFromFlash(throttle);
-    loadSensorSetupFromFlash(throttle);
+    loadFlashPage1ToThrottle(throttle);
   }
 }
 
@@ -172,28 +170,17 @@ EThrottleCAN::handleStandard(
     uint8_t      * data)
 {
   const uint8_t msgId = id - ecuRtBcastBaseId;
-  DEBUG("handleStandard");
-
-  switch (msgId)
+  if (msgId == 0)
   {
-    case 0:
-    {
-      ecu::rpm = MSG00_t::get_rpm(data);
-
-      DEBUG(
-          "time = %d; pw1 = %d; pw2 = %d; rpm = %d",
-          MSG00_t::get_seconds(data),
-          MSG00_t::get_pw1(data),
-          MSG00_t::get_pw2(data),
-          ecu::rpm);
-      break;
-    }
-    default:
-    {
-      // silently ignore
-      break;
-    }
-  }// switch
+    auto msg0 = reinterpret_cast<const MegaCAN::RtMsg00_t *>(data);
+    ecu::seconds = msg0->seconds();
+    ecu::rpm     = msg0->rpm();
+  }
+  else if (msgId == 6)
+  {
+    auto msg6 = reinterpret_cast<const MegaCAN::RtMsg06_t *>(data);
+    ecu::idleDuty = static_cast<uint32_t>(msg6->iacstep()) * 392u / 10u;
+  }
 }
 
 bool
