@@ -96,7 +96,7 @@ void loop() {
 
   // update ADC status
   outPC.adcStatus.schedIdx = adc::getSchedIdx();
-  outPC.adcStatus.state = adc::getState();
+  outPC.adcStatus.state = static_cast<uint8_t>(adc::getState());
   outPC.adcStatus.convCycles = adc::conversionCycles;
   outPC.adcStatus.adcsra = ADCSRA;
 

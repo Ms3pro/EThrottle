@@ -47,7 +47,8 @@ void
 onTableBurned(
   uint8_t table)
 {
-  if (table == TableId_E::eTI_CFG_PAGE1)
+  const auto tableId = static_cast<TableId>(table);
+  if (tableId == TableId::CFG_PAGE1)
   {
     loadThrottlePID_FromFlash(throttle);
     loadSensorCalibrationsFromFlash(throttle);
@@ -98,8 +99,8 @@ canLoop()
 
 void
 processCMD(
-  const uint8_t *cmd,
-  uint8_t len)
+  const uint8_t * cmd,
+  uint8_t         len)
 {
   if (len < 1) {
     return;
@@ -120,27 +121,27 @@ processCMD(
 }
 
 EThrottleCAN::EThrottleCAN(
-    uint8_t cs,
-    uint8_t myId,
-    uint8_t intPin,
-    MegaCAN::CAN_Msg *buff,
-    uint8_t buffSize,
-    const MegaCAN::TableDescriptor_t *tables,
-    uint8_t numTables)
+    uint8_t                            cs,
+    uint8_t                            myId,
+    uint8_t                            intPin,
+    MegaCAN::CAN_Msg                 * buff,
+    uint8_t                            buffSize,
+    const MegaCAN::TableDescriptor_t * tables,
+    uint8_t                            numTables)
  : MegaCAN::ExtDevice(cs,myId,intPin,buff,buffSize,tables,numTables)
 {
 }
 
 void
 EThrottleCAN::getOptions(
-  struct MegaCAN::Options *opts)
+  struct MegaCAN::Options * opts)
 {
   opts->handleStandardMsgsImmediately = true;
 }
 
 void
 EThrottleCAN::applyCanFilters(
-  MCP_CAN *can)
+  MCP_CAN * can)
 {
   #define ID_TYPE_EXT 1
   #define ID_TYPE_STD 0
@@ -167,8 +168,8 @@ EThrottleCAN::applyCanFilters(
 void
 EThrottleCAN::handleStandard(
     const uint32_t id,
-    const uint8_t length,
-    uint8_t *data)
+    const uint8_t  length,
+    uint8_t      * data)
 {
   const uint8_t msgId = id - ecuRtBcastBaseId;
   DEBUG("handleStandard");
@@ -197,13 +198,14 @@ EThrottleCAN::handleStandard(
 
 bool
 EThrottleCAN::writeToTable(
-  const uint8_t table,
-  const uint16_t offset,
-  const uint8_t len,
-  const uint8_t *data)
+  const uint8_t   table,
+  const uint16_t  offset,
+  const uint8_t   len,
+  const uint8_t * data)
 {
+  const auto tableId = static_cast<TableId>(table);
   // intercept table writes to the command buffer, and handle them directly
-  if (table == TableId_E::eTI_UART_CMD)
+  if (tableId == TableId::UART_CMD)
   {
     processCMD(data, len);
     return true;

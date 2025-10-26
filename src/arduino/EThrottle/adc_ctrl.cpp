@@ -15,7 +15,7 @@ namespace adc
   volatile uint16_t conversionCount;
   volatile uint16_t conversionCycles;
   volatile uint8_t schedIdx = 0;
-  volatile ADC_State_E adcState = ADC_State_E::eADCS_Stopped;
+  volatile ADC_State adcState = ADC_State::Stopped;
 
   // order in which we perform measurements
   const CtrlEntry *sched[] = {
@@ -55,30 +55,30 @@ namespace adc
 
     switch (entry->tMode)
     {
-      case TriggerMode_E::eTM_Immediate:
-        adcState = ADC_State_E::eADCS_Started;
+      case TriggerMode::Immediate:
+        adcState = ADC_State::Started;
         ADCSRB = 0x0;// trigger on start
         ADCSRA = ADC_BASE_CFG | (1 << ADSC);// start conversion
         break;
-      case TriggerMode_E::eTM_Tmr0_MatchA:
-      case TriggerMode_E::eTM_Tmr0_Ovrf:
-      case TriggerMode_E::eTM_Tmr1_MatchB:
-      case TriggerMode_E::eTM_Tmr1_Ovrf:
-      case TriggerMode_E::eTM_Tmr1_CapEvt:
+      case TriggerMode::Tmr0_MatchA:
+      case TriggerMode::Tmr0_Ovrf:
+      case TriggerMode::Tmr1_MatchB:
+      case TriggerMode::Tmr1_Ovrf:
+      case TriggerMode::Tmr1_CapEvt:
         // setup auto trigger source
-        adcState = ADC_State_E::eADCS_PendingTrigger;
+        adcState = ADC_State::PendingTrigger;
         ADCSRB = (uint8_t)(entry->tMode);
         ADCSRA = ADC_BASE_CFG | (1 << ADATE);// enable conversion on auto trigger
         break;
-      case TriggerMode_E::eTM_ISR_Tmr0_OCA:
+      case TriggerMode::ISR_Tmr0_OCA:
         // will start conversion in the TIMER0_COMPA_vect ISR
-        adcState = ADC_State_E::eADCS_PendingTrigger;
+        adcState = ADC_State::PendingTrigger;
         TIFR0 |= (1 << OCF0A);// clear interrupt flag
         TIMSK0 |= (1 << OCIE0A);
         break;
-      case TriggerMode_E::eTM_ISR_Tmr0_OCB:
+      case TriggerMode::ISR_Tmr0_OCB:
         // will start conversion in the TIMER0_COMPB_vect ISR
-        adcState = ADC_State_E::eADCS_PendingTrigger;
+        adcState = ADC_State::PendingTrigger;
         TIFR0 |= (1 << OCF0B);// clear interrupt flag
         TIMSK0 |= (1 << OCIE0B);
         break;
@@ -116,14 +116,14 @@ namespace adc
 
       switch (sched[schedIdx]->mMode)
       {
-        case MeasurementMode_E::eMM_Disabled:
+        case MeasurementMode::Disabled:
           continue;
           break;
-        case MeasurementMode_E::eMM_Continuous:
+        case MeasurementMode::Continuous:
           keepSearching = 0;
           doSetup = 1;
           break;
-        case MeasurementMode_E::eMM_OneShot:
+        case MeasurementMode::OneShot:
           if (sched[schedIdx]->flags.needsMeasure)
           {
             keepSearching = 0;
@@ -139,7 +139,7 @@ namespace adc
     }
     else
     {
-      adcState = ADC_State_E::eADCS_Stopped;
+      adcState = ADC_State::Stopped;
     }
     return doSetup;
   }
@@ -149,7 +149,7 @@ namespace adc
     TIMSK0 &= ~(1 << OCIE0A);// disable interrupt
 
     // start the ADC conversion (ADCMUX was setup for us in startADC())
-    adcState = ADC_State_E::eADCS_Started;
+    adcState = ADC_State::Started;
     ADCSRA = ADC_BASE_CFG | (1 << ADSC);
 
 #if ENABLE_ADC_STROBES && STROBE_ON_OC0A_ISR
@@ -163,7 +163,7 @@ namespace adc
     TIMSK0 &= ~(1 << OCIE0B);// disable interrupt
 
     // start the ADC conversion (ADCMUX was setup for us in startADC())
-    adcState = ADC_State_E::eADCS_Started;
+    adcState = ADC_State::Started;
     ADCSRA = ADC_BASE_CFG | (1 << ADSC);
 
 #if ENABLE_ADC_STROBES && STROBE_ON_OC0B_ISR
@@ -175,7 +175,7 @@ namespace adc
   // ADC measurement complete interrupt
   ISR(ADC_vect)
   {
-    adcState = ADC_State_E::eADCS_Complete;
+    adcState = ADC_State::Complete;
     conversionCount++;
     CtrlEntry *currEntry = sched[schedIdx];
     currEntry->value = ADC;
@@ -220,7 +220,7 @@ namespace adc
   stop()
   {
     ADCSRA = 0x0;// terminate by disabling ADC
-    adcState = ADC_State_E::eADCS_Stopped;
+    adcState = ADC_State::Stopped;
   }
 
   uint8_t
@@ -229,7 +229,7 @@ namespace adc
     return schedIdx;
   }
 
-  ADC_State_E
+  ADC_State
   getState()
   {
     return adcState;

@@ -5,58 +5,54 @@
 namespace adc
 {
 
-  enum MeasurementMode_E
+  enum struct MeasurementMode
   {
     // will not measure this entry at all
-    eMM_Disabled,
+    Disabled,
     // measures the entry every iteration
-    eMM_Continuous,
+    Continuous,
     // measures the entry if the 'needsMeasure' flag is set
-    eMM_OneShot
+    OneShot
   };
 
   // specify how the ADC should be started once an entry becomes
   // ready for scheduling.
   // Note: values correspond to ADC Auto Trigger Source values (reg ADCSRB)
-  enum TriggerMode_E
+  enum struct TriggerMode
   {
-    eTM_Immediate = 0,
-    eTM_Tmr0_MatchA = 3,
-    eTM_Tmr0_Ovrf = 4,
-    eTM_Tmr1_MatchB = 5,
-    eTM_Tmr1_Ovrf = 6,
-    eTM_Tmr1_CapEvt = 7,
+    Immediate = 0,
+    Tmr0_MatchA = 3,
+    Tmr0_Ovrf = 4,
+    Tmr1_MatchB = 5,
+    Tmr1_Ovrf = 6,
+    Tmr1_CapEvt = 7,
 
-    eTM_ISR_Tmr0_OCA = 20,
-    eTM_ISR_Tmr0_OCB = 21
+    ISR_Tmr0_OCA = 20,
+    ISR_Tmr0_OCB = 21
   };
 
-  enum ADC_State_E
+  enum struct ADC_State
   {
-    eADCS_Stopped = 0,
-    eADCS_Started = 1,
-    eADCS_PendingTrigger = 2,
-    eADCS_Complete = 3
+    Stopped = 0,
+    Started = 1,
+    PendingTrigger = 2,
+    Complete = 3
   };
 
   struct CtrlEntry
   {
     CtrlEntry()
-    : adcMUX(0)
-    , mMode(MeasurementMode_E::eMM_Disabled)
-    , tMode(TriggerMode_E::eTM_Immediate)
-    , value(0)
     {
       flags.needsMeasure = 0;
       flags.sampled = 0;
     }
 
     // adc mux value to use for measurement
-    unsigned int adcMUX;
+    unsigned int adcMUX = 0u;
 
-    MeasurementMode_E mMode;
+    MeasurementMode mMode = MeasurementMode::Disabled;
 
-    volatile TriggerMode_E tMode;
+    volatile TriggerMode tMode = TriggerMode::Immediate;
 
     struct Flags
     {
@@ -66,7 +62,8 @@ namespace adc
     volatile Flags flags;
 
     // latest ADC measurement value
-    volatile uint16_t value;
+    volatile uint16_t value = 0u;
+
   };
 
   extern CtrlEntry ppsA;
@@ -93,7 +90,7 @@ namespace adc
   uint8_t
   getSchedIdx();
 
-  ADC_State_E
+  ADC_State
   getState();
 
 }

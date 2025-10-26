@@ -40,7 +40,7 @@ Throttle::Throttle(
  , outVars_(nullptr)
  , pidSampleRate_ms_(100)
  , pid_(&pidIn_,&pidOut_,&pidSetpoint_,0,0,0, DIRECT)
- , setpointSource_(SetpointSource_E::eSS_PPS)
+ , setpointSource_(SetpointSource::PPS)
  , userSetpoint_(0)
  , sensorSetup_()
  , ppsCompareThresh_(50)
@@ -48,15 +48,15 @@ Throttle::Throttle(
 {
   // setup ADC measurements
   adc::tpsA.adcMUX = 0;// A0
-  adc::tpsA.mMode = adc::MeasurementMode_E::eMM_Continuous;
+  adc::tpsA.mMode = adc::MeasurementMode::Continuous;
   adc::tpsB.adcMUX = 1;// A1
-  adc::tpsB.mMode = adc::MeasurementMode_E::eMM_Continuous;
+  adc::tpsB.mMode = adc::MeasurementMode::Continuous;
   adc::ppsA.adcMUX = 2;// A2
-  adc::ppsA.mMode = adc::MeasurementMode_E::eMM_Continuous;
+  adc::ppsA.mMode = adc::MeasurementMode::Continuous;
   adc::ppsB.adcMUX = 3;// A3
-  adc::ppsB.mMode = adc::MeasurementMode_E::eMM_Continuous;
+  adc::ppsB.mMode = adc::MeasurementMode::Continuous;
   adc::driverFB.adcMUX = 5;// A5
-  adc::driverFB.mMode = adc::MeasurementMode_E::eMM_OneShot;
+  adc::driverFB.mMode = adc::MeasurementMode::OneShot;
   // Rationale for triggering current feedback off timer0 overflow:
   //
   // The motor pins are driven by PD6 (OC0A) and PD5 (OC0B).
@@ -73,7 +73,7 @@ Throttle::Throttle(
   // random. Since both PWM outputs are driven high when timer0 hits
   // BOTTOM (ie. overflows), we can auto trigger the current feedback
   // ADC measurement off of the timer0 overflow event.
-  adc::driverFB.tMode = adc::TriggerMode_E::eTM_Tmr0_Ovrf;
+  adc::driverFB.tMode = adc::TriggerMode::Tmr0_Ovrf;
 
   status_.pidAutoTuneBusy = 0;
   status_.ppsComparisonFault = 0;
@@ -145,12 +145,12 @@ Throttle::enableThrottle()
 
 void
 Throttle::setSetpointSource(
-  SetpointSource_E source)
+  SetpointSource source)
 {
   setpointSource_ = source;
 }
 
-Throttle::SetpointSource_E
+Throttle::SetpointSource
 Throttle::getSetpointSource() const
 {
   return setpointSource_;
@@ -205,7 +205,7 @@ void
 Throttle::setSetpointOverride(
   double value)
 {
-  if (setpointSource_ == SetpointSource_E::eSS_User)
+  if (setpointSource_ == SetpointSource::User)
   {
     if (value >= 0.0 && value <= 100.0)
     {
@@ -222,21 +222,21 @@ Throttle::status() const
 
 void
 Throttle::clearFault(
-  Throttle::FaultClearCmd_E cmd)
+  Throttle::FaultClearCmd cmd)
 {
-  const bool clrAll = cmd == FaultClearCmd_E::All;
+  const bool clrAll = cmd == FaultClearCmd::All;
 
-  if (clrAll || cmd == FaultClearCmd_E::PPS)
+  if (clrAll || cmd == FaultClearCmd::PPS)
   {
     status_.ppsComparisonFault = 0;
     ppsFaultFilter_.reset();
   }
-  if (clrAll || cmd == FaultClearCmd_E::TPS)
+  if (clrAll || cmd == FaultClearCmd::TPS)
   {
     status_.tpsComparisonFault = 0;
     tpsFaultFilter_.reset();
   }
-  if (clrAll || cmd == FaultClearCmd_E::Driver)
+  if (clrAll || cmd == FaultClearCmd::Driver)
   {
     driverClearFault();
   }
@@ -385,12 +385,12 @@ Throttle::doPedal()
 #endif
     outVars_->ppsCompFaultCount += faulted;
     const ModeWithTransition mwt = ppsFaultFilter_.process(faulted);
-    if (mwt.mode == FaultMode_E::eFM_LongTerm)
+    if (mwt.mode == FaultMode::LongTerm)
     {
       pps_ = 0;// default to 0% pedal position to be safe
       status_.ppsComparisonFault = 1;
     }
-    else if (mwt.mode == FaultMode_E::eFM_Nominal)
+    else if (mwt.mode == FaultMode::Nominal)
     {
       status_.ppsComparisonFault = 0;
     }
@@ -457,12 +457,12 @@ Throttle::doThrottle()
 #endif
     outVars_->tpsCompFaultCount += faulted;
     const ModeWithTransition mwt = tpsFaultFilter_.process(faulted);
-    if (mwt.mode == FaultMode_E::eFM_LongTerm)
+    if (mwt.mode == FaultMode::LongTerm)
     {
       driverDisable();
       status_.tpsComparisonFault = 1;
     }
-    else if (mwt.mode == FaultMode_E::eFM_Nominal && mwt.transition)
+    else if (mwt.mode == FaultMode::Nominal && mwt.transition)
     {
       driverEnable();
       status_.tpsComparisonFault = 0;
@@ -487,13 +487,13 @@ Throttle::doThrottle()
   {
     switch (setpointSource_)
     {
-      case SetpointSource_E::eSS_PPS:
+      case SetpointSource::PPS:
       {
         ppsAdder_ = ((int32_t)(10000 - tpsStall_ - idleAdder_) * pps_) / 10000;
         tpsTarget_ = tpsStall_ + idleAdder_ + ppsAdder_;
         break;
       }
-      case SetpointSource_E::eSS_User:
+      case SetpointSource::User:
         tpsTarget_ = userSetpoint_;
         break;
     }
@@ -572,12 +572,12 @@ Throttle::doThrottle()
     analogWrite(driverPinP_, motorOut_);
     analogWrite(driverPinN_, 0);
     // setup motor current measurement on OC0B match ISR (motor P is on pin 5 - OC0B)
-    adc::driverFB.tMode = adc::TriggerMode_E::eTM_ISR_Tmr0_OCB;
+    adc::driverFB.tMode = adc::TriggerMode::ISR_Tmr0_OCB;
   } else if (motorOut_ < 0) {
     analogWrite(driverPinP_, 0);
     analogWrite(driverPinN_, motorOut_ * -1);// * -1 to write PWM magnitude only
     // setup motor current measurement on OC0A match ISR (motor N is on pin 6 - OC0A)
-    adc::driverFB.tMode = adc::TriggerMode_E::eTM_ISR_Tmr0_OCA;
+    adc::driverFB.tMode = adc::TriggerMode::ISR_Tmr0_OCA;
   } else {
     analogWrite(driverPinP_, 0);
     analogWrite(driverPinN_, 0);
@@ -587,7 +587,7 @@ Throttle::doThrottle()
   analogWrite(driverPinP_, motorOut_);
   analogWrite(driverPinN_, 0);
   // setup motor current measurement on OC0B match ISR (motor P is on pin 5 - OC0B)
-  adc::driverFB.tMode = adc::TriggerMode_E::eTM_ISR_Tmr0_OCB;
+  adc::driverFB.tMode = adc::TriggerMode::ISR_Tmr0_OCB;
 #endif
 
   // request driver current ADC measurement once a PID cycle

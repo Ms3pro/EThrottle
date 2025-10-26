@@ -546,7 +546,7 @@ def write_header_file(args, nspace, table_list):
 	global_vars = []
 	table_size_defns = []
 	table_flash_offset_defns = []
-	table_id_enum_str = "enum TableId_E {"
+	table_id_enum_str = "enum struct TableId {"
 	forward_declare_str = "// forward declarations"
 	field_offset_macros = ""
 	flash_table_idx = 0
@@ -556,7 +556,7 @@ def write_header_file(args, nspace, table_list):
 			table_id_enum_str += "\n"
 		else:
 			table_id_enum_str += ",\n"
-		table_id_enum_str += DEFAULT_INDENT + "eTI_%s = %d" % (row[TL_COL_ENUM_NAME], idx)
+		table_id_enum_str += DEFAULT_INDENT + "%s = %d" % (row[TL_COL_ENUM_NAME], idx)
 		table_flash_offset_str = "-1"
 		# if it has a valid type...
 		if len(row[TL_COL_TYPE]) > 0:

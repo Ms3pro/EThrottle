@@ -2,31 +2,22 @@
 
 #include <stdint.h>
 
-enum FaultMode_E
+enum struct FaultMode
 {
-    eFM_Nominal = 0,
-    eFM_ShortTerm = 1,
-    eFM_LongTerm = 2
+    Nominal = 0,
+    ShortTerm = 1,
+    LongTerm = 2
 };
 
 struct ModeWithTransition
 {
-    FaultMode_E mode;
+    FaultMode mode;
     bool transition;
 };
 
 class FaultFilter
 {
 public:
-    FaultFilter()
-     : mode_(eFM_Nominal)
-     , timeout_(0)
-     , ltFaultCount_(0)
-     , ltFaultThresh_(5)
-     , stFaultTimeoutMax_(10)
-     , ltFaultTimeoutMax_(100)
-    {}
-
     void
     init(
         uint8_t ltFaultThresh,
@@ -42,12 +33,12 @@ public:
     void
     reset()
     {
-        mode_ = FaultMode_E::eFM_Nominal;
+        mode_ = FaultMode::Nominal;
         timeout_ = 0;
         ltFaultCount_ = 0;
     }
 
-    FaultMode_E
+    FaultMode
     mode() const
     {
         return mode_;
@@ -57,25 +48,25 @@ public:
     process(
         bool faulted)
     {
-        FaultMode_E prevMode = mode_;
+        FaultMode prevMode = mode_;
 
         if (faulted)
         {
             switch (mode_)
             {
-                case FaultMode_E::eFM_Nominal:
+                case FaultMode::Nominal:
                 {
                     // ENTER SHORT TERM FAULT MODE
-                    mode_ = FaultMode_E::eFM_ShortTerm;
+                    mode_ = FaultMode::ShortTerm;
                     timeout_ = stFaultTimeoutMax_;
                     break;
                 }
-                case FaultMode_E::eFM_ShortTerm:
+                case FaultMode::ShortTerm:
                 {
                     if (++ltFaultCount_ >= ltFaultThresh_)
                     {
                         // ENTER LONG TERM FAULT MODE
-                        mode_ = FaultMode_E::eFM_LongTerm;
+                        mode_ = FaultMode::LongTerm;
                         timeout_ = ltFaultTimeoutMax_;
                     }
                     else
@@ -84,7 +75,7 @@ public:
                     }
                     break;
                 }
-                case FaultMode_E::eFM_LongTerm:
+                case FaultMode::LongTerm:
                 {
                     // reset timeout. must see no faults within window for LT fault to clear
                     timeout_ = ltFaultTimeoutMax_;
@@ -98,7 +89,7 @@ public:
             {
                 // EXIT FAULT MODE
                 ltFaultCount_ = 0;
-                mode_ = FaultMode_E::eFM_Nominal;
+                mode_ = FaultMode::Nominal;
             }
         }
 
@@ -106,12 +97,12 @@ public:
     }
 
 private:
-    FaultMode_E mode_;
-    uint8_t timeout_;
-    uint8_t ltFaultCount_;
+    FaultMode mode_ = FaultMode::Nominal;
+    uint8_t timeout_ = 0u;
+    uint8_t ltFaultCount_ = 0u;
 
-    uint8_t ltFaultThresh_;
-    uint8_t stFaultTimeoutMax_;
-    uint8_t ltFaultTimeoutMax_;
+    uint8_t ltFaultThresh_ = 5u;
+    uint8_t stFaultTimeoutMax_ = 10u;
+    uint8_t ltFaultTimeoutMax_ = 100u;
 
 };

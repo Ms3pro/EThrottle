@@ -24,10 +24,10 @@ class Throttle
 {
 public:
 
-  enum SetpointSource_E
+  enum struct SetpointSource
   {
-    eSS_PPS = 0,
-    eSS_User = 1
+    PPS = 0,
+    User = 1
   };
 
   struct FlashTableDescriptor
@@ -37,7 +37,7 @@ public:
     uint8_t nBins;
   };
 
-  enum struct FaultClearCmd_E
+  enum struct FaultClearCmd
   {
     All = 'A',
     Driver = 'd',
@@ -76,9 +76,9 @@ public:
 
   void
   setSetpointSource(
-    SetpointSource_E source);
+    SetpointSource source);
 
-  SetpointSource_E
+  SetpointSource
   getSetpointSource() const;
 
   void
@@ -108,7 +108,7 @@ public:
 
   /**
    * Setter for the override setpoint value. Only does something if
-   * the setpoint source is set to 'eSS_User' via setSetpointSource().
+   * the setpoint source is set to 'User' via setSetpointSource().
    * @param[in] value
    * the override value in percent (0.0 to 100.0)
    */
@@ -121,7 +121,7 @@ public:
 
   void
   clearFault(
-    FaultClearCmd_E cmd);
+    FaultClearCmd cmd);
 
   /**
    * Call this method every sample interval.
@@ -266,7 +266,7 @@ private:
 
     PIDAutotuner tuner_;
 
-    SetpointSource_E setpointSource_;
+    SetpointSource setpointSource_;
 
     // user specified setpoint via setSetpointOverride()
     // range: [0 to 10000] (ie. 0% to 100%)
