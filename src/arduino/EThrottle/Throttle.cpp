@@ -1,10 +1,11 @@
-#include "EThrottleTables.h"
 #include "Throttle.h"
 
 #include <Arduino.h>
 #include <logging.h>
 
 #include "adc_ctrl.h"
+#include "config.h"
+#include "EThrottleTables.h"
 #include <EndianUtils.h>
 #include <FlashUtils.h>
 
@@ -17,11 +18,6 @@
 #define STROBE_PIN A4
 #define STROBE_ON_TPS_FAULT 1
 #define STROBE_ON_PPS_FAULT 0
-
-Throttle throttle(
-  DRIVER_P,DRIVER_N,
-  DRIVER_DIS,
-  DRIVER_FS);
 
 Throttle::Throttle(
     uint8_t driverPinP,

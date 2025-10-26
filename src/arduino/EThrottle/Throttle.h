@@ -1,24 +1,10 @@
-#ifndef THROTTLE_H_
-#define THROTTLE_H_
+#pragma once
 
 #include "EThrottleTables.h"
 #include "FaultFilter.h"
 #include <PID_v1.h>
 #include <stdint.h>
 #include <pidautotuner.h>
-
-// define this if the motor driver is an h-bridge variant. this
-// enables us to reverse the throttle motor polarity to close
-// the blade faster than the return spring would allow.
-// if unset, then the code will rely on the return spring to
-// bring the throttle blade closed (slow but still functional)
-#define SUPPORT_H_BRIDGE
-
-// digital outputs
-#define DRIVER_DIS 4
-#define DRIVER_P   5// pin needs PWM support (PD5 OC0B)
-#define DRIVER_N   6// pin needs PWM support (PD6 OC0A)
-#define DRIVER_FS  7
 
 class Throttle
 {
@@ -285,8 +271,6 @@ private:
 
 };
 
-extern Throttle throttle;
-
 // accessor utilities
 void
 loadThrottlePID_FromFlash(
@@ -303,5 +287,3 @@ loadSensorCalibrationsFromFlash(
 void
 loadSensorSetupFromFlash(
   Throttle &throttle);
-
-#endif

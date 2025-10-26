@@ -1,7 +1,5 @@
 #include <avr/sfr_defs.h>
 #include <avr/wdt.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "adc_ctrl.h"
 #include "can.h"
@@ -10,20 +8,12 @@
 #include <logging_impl_lite.h>
 #include "Throttle.h"
 
-// analog inputs
-#define CTRL_BUTN A4
-
-// digital outputs
-#define WSPEED_INT 2
-                // 3 CAN interrupt
-#define CLUTCH_SW  8
-#define BRAKE_SW   9
-                // 10 CAN CS
-                // 11 CAN MOSI
-                // 12 CAN MISO
-                // 13 CAN SCK
-
 ThrottleOutVars_T *throttleVars = &outPC.tVars;
+
+Throttle throttle(
+  DRIVER_P,DRIVER_N,
+  DRIVER_DIS,
+  DRIVER_FS);
 
 // setup watchdog
 void wdtInit() {
@@ -57,14 +47,14 @@ showResetCause(
 }
 
 void setup() {
-#ifdef MCP_CAN_BOOT_BL
+#if defined(MCP_CAN_BOOT_BL)
   // retrieves the MCU reset cause (MCUSR register) when using the
   // mcp-can-boot bootloader (https://github.com/crycode-de/mcp-can-boot).
   uint8_t mcusr;
   __asm__ __volatile__ ( "mov %0, r2 \n" : "=r" (mcusr) : );
 #endif
 
-#if WATCHDOG_SUPPORT
+#if defined(WATCHDOG_SUPPORT)
   wdtInit();// start watchdog
 #endif
 

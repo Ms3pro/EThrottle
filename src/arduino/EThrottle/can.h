@@ -1,12 +1,8 @@
 #pragma once
 
 #include <MegaCAN_ExtDevice.h>
+#include "config.h"
 #include "EThrottleTables.h"
-
-#define CAN_CS  10
-#define CAN_INT 3
-#define CAN_ID  5
-#define CAN_MSG_BUFFER_SIZE 8
 
 // call this in main arduino setup()
 void
