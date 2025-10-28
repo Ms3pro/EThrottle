@@ -20,10 +20,10 @@
 #define STROBE_ON_PPS_FAULT 0
 
 Throttle::Throttle(
-    uint8_t driverPinP,
-    uint8_t driverPinN,
-    uint8_t driverPinDis,
-    uint8_t driverPinFS)
+    const uint8_t driverPinP,
+    const uint8_t driverPinN,
+    const uint8_t driverPinDis,
+    const uint8_t driverPinFS)
  : driverPinP_(driverPinP)
  , driverPinN_(driverPinN)
  , driverPinDis_(driverPinDis)
@@ -79,8 +79,8 @@ Throttle::Throttle(
 
 void
 Throttle::init(
-    uint8_t pidSampleRate_ms,
-    ThrottleOutVars_T *outVars)
+  const uint8_t       pidSampleRate_ms,
+  ThrottleOutVars_T * outVars)
 {
   pidSampleRate_ms_ = pidSampleRate_ms;
   outVars_ = outVars;
@@ -129,7 +129,7 @@ Throttle::enableThrottle()
 
 void
 Throttle::setSetpointSource(
-  SetpointSource source)
+  const SetpointSource source)
 {
   setpointSource_ = source;
 }
@@ -142,40 +142,40 @@ Throttle::getSetpointSource() const
 
 void
 Throttle::setRangeCalPPS_A(
-  RangeCalibration rc)
+  const RangeCalibration & rc)
 {
   ppsCalA_ = rc;
 }
 
 void
 Throttle::setRangeCalPPS_B(
-  RangeCalibration rc)
+  const RangeCalibration & rc)
 {
   ppsCalB_ = rc;
 }
 
 void
 Throttle::setRangeCalTPS_A(
-  RangeCalibration rc)
+  const RangeCalibration & rc)
 {
   tpsCalA_ = rc;
 }
 
 void
 Throttle::setRangeCalTPS_B(
-  RangeCalibration rc)
+  const RangeCalibration & rc)
 {
   tpsCalB_ = rc;
 }
 
 void
 Throttle::setSensorSetup(
-  SensorSetup setup,
-  const FlashTableDescriptor &ppsCompDesc,
-  const FlashTableDescriptor &tpsCompDesc,
-  uint16_t ppsCompareThresh,
-  uint16_t tpsCompareThresh,
-  uint16_t tpsStall)
+  const SensorSetup            setup,
+  const FlashTableDescriptor & ppsCompDesc,
+  const FlashTableDescriptor & tpsCompDesc,
+  const uint16_t               ppsCompareThresh,
+  const uint16_t               tpsCompareThresh,
+  const uint16_t               tpsStall)
 {
   sensorSetup_ = setup;
   ppsCompDesc_ = ppsCompDesc;
@@ -264,6 +264,11 @@ Throttle::run()
     EndianUtils::setBE(outVars_->idleAdder, idleAdder_);
     EndianUtils::setBE(outVars_->ppsAdder, ppsAdder_);
     EndianUtils::setBE(outVars_->driverFB, driverFB_);
+    EndianUtils::setBE(outVars_->ppsSafetyDelta, ppsDelta_);
+    EndianUtils::setBE(outVars_->tpsSafetyDelta, tpsDelta_);
+    outVars_->ppsCompFaultCount = ppsCompFaultCount_;
+    outVars_->tpsCompFaultCount = tpsCompFaultCount_;
+    outVars_->driverFaultCount = driverFaultCount_;
   }
 }
 
@@ -366,22 +371,21 @@ Throttle::doPedal()
       ppsCompDesc_.yBinsFlashOffset,
       ppsCompDesc_.nBins,
       preferADC);
-    const int16_t ppsDelta = otherADC - otherExpected;
-    EndianUtils::setBE(outVars_->ppsSafetyDelta, ppsDelta);
+    ppsDelta_ = otherADC - otherExpected;
     DEBUG(
       "preferADC = %d, otherADC = %d, otherExpected = %d, ppsDelta = %d",
       preferADC,
       otherADC,
       otherExpected,
-      ppsDelta);
+      ppsDelta_);
 
     // fault filtering logic
-    const bool faulted = abs(ppsDelta) >= ppsCompareThresh_;
+    const bool faulted = abs(ppsDelta_) >= ppsCompareThresh_;
 #if ENABLE_ETHROTTLE_STROBES && STROBE_ON_PPS_FAULT
       digitalWrite(STROBE_PIN, faulted);
       digitalWrite(STROBE_PIN, 0);
 #endif
-    outVars_->ppsCompFaultCount += faulted;
+    ppsCompFaultCount_ += faulted;
     const ModeWithTransition mwt = ppsFaultFilter_.process(faulted);
     if (mwt.mode == FaultMode::LongTerm)
     {
@@ -438,22 +442,21 @@ Throttle::doThrottle()
       tpsCompDesc_.yBinsFlashOffset,
       tpsCompDesc_.nBins,
       preferADC);
-    const int16_t tpsDelta = otherADC - otherExpected;
-    EndianUtils::setBE(outVars_->tpsSafetyDelta, tpsDelta);
+    tpsDelta_ = otherADC - otherExpected;
     DEBUG(
       "preferADC = %d, otherADC = %d, otherExpected = %d, tpsDelta = %d",
       preferADC,
       otherADC,
       otherExpected,
-      tpsDelta);
+      tpsDelta_);
 
     // fault filtering logic
-    const bool faulted = abs(tpsDelta) >= tpsCompareThresh_;
+    const bool faulted = abs(tpsDelta_) >= tpsCompareThresh_;
 #if ENABLE_ETHROTTLE_STROBES && STROBE_ON_TPS_FAULT
       digitalWrite(STROBE_PIN, faulted);
       digitalWrite(STROBE_PIN, 0);
 #endif
-    outVars_->tpsCompFaultCount += faulted;
+    tpsCompFaultCount_ += faulted;
     const ModeWithTransition mwt = tpsFaultFilter_.process(faulted);
     if (mwt.mode == FaultMode::LongTerm)
     {
@@ -560,7 +563,7 @@ Throttle::doThrottle()
     if (status_.motorDriverFault == 0)
     {
       // only increment counter upon entering fault condition
-      outVars_->driverFaultCount++;
+      driverFaultCount_++;
     }
   }
   status_.motorDriverFault = liveMotorDriverFault;

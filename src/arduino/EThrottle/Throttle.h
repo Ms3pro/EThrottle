@@ -34,10 +34,10 @@ public:
 
 public:
   Throttle(
-    uint8_t driverPinP,
-    uint8_t driverPinN,
-    uint8_t driverPinDis,
-    uint8_t driverPinFS);
+    const uint8_t driverPinP,
+    const uint8_t driverPinN,
+    const uint8_t driverPinDis,
+    const uint8_t driverPinFS);
 
   /**
    * Configures IO pins and internal classes.
@@ -45,8 +45,8 @@ public:
    */
   void
   init(
-    uint8_t pidSampleRate_ms,
-    ThrottleOutVars_T *outVars);
+    const uint8_t       pidSampleRate_ms,
+    ThrottleOutVars_T * outVars);
 
   /**
    * disables the motor driver and the PID control loop.
@@ -63,35 +63,35 @@ public:
 
   void
   setSetpointSource(
-    SetpointSource source);
+    const SetpointSource source);
 
   SetpointSource
   getSetpointSource() const;
 
   void
   setRangeCalPPS_A(
-    RangeCalibration rc);
+    const RangeCalibration & rc);
 
   void
   setRangeCalPPS_B(
-    RangeCalibration rc);
+    const RangeCalibration & rc);
 
   void
   setRangeCalTPS_A(
-    RangeCalibration rc);
+    const RangeCalibration & rc);
 
   void
   setRangeCalTPS_B(
-    RangeCalibration rc);
+    const RangeCalibration & rc);
 
   void
   setSensorSetup(
-    SensorSetup setup,
-    const FlashTableDescriptor &ppsCompDesc,
-    const FlashTableDescriptor &tpsCompDesc,
-    uint16_t ppsCompareThresh,
-    uint16_t tpsCompareThresh,
-    uint16_t tpsStall);
+    const SensorSetup            setup,
+    const FlashTableDescriptor & ppsCompDesc,
+    const FlashTableDescriptor & tpsCompDesc,
+    const uint16_t               ppsCompareThresh,
+    const uint16_t               tpsCompareThresh,
+    const uint16_t               tpsStall);
   
   void
   setIdleAddAthority(
@@ -285,9 +285,19 @@ private:
     // delta in the sensor comparison logic.
     uint16_t ppsCompareThresh_ = 20u;
     uint16_t tpsCompareThresh_ = 20u;
-
+    // if pps/tps safety comparison is enabled, this is the delta between
+    // what we expect the readings to be vs. the actual. if these values
+    // exceed 'ppsComparThresh_' or 'tpsCompareThresh_' repsectively, then
+    // a fault is triggered.
+    // range: [-2048 to 2048] (ie. 0% to 100%)
+    int16_t ppsDelta_ = 0u;
+    int16_t tpsDelta_ = 0u;
+    uint8_t ppsCompFaultCount_ = 0u;
+    uint8_t tpsCompFaultCount_ = 0u;
     FaultFilter ppsFaultFilter_;
     FaultFilter tpsFaultFilter_;
+
+    uint8_t driverFaultCount_ = 0u;
 
 };
 
