@@ -197,7 +197,7 @@
     ppsCompareThresh = "Threshold driving the PPS A/B comparison logic.\nThe algorithm will lookup an expected ADC reading for the 'secondary' sensor, given the prefered\n'primary' sensor's ADC. If the expected value differs the actual value by more than this threshold, then\na PPS sensor fault will be flagged, and the PPS position will default to 0%."
     tpsCompareThresh = "Threshold driving the TPS A/B comparison logic.\nThe algorithm will lookup an expected ADC reading for the 'secondary' sensor, given the prefered\n'primary' sensor's ADC. If the expected value differs the actual value by more than this threshold, then\na TPS sensor fault will be flagged, and the throttle motor will be disabled."
     tpsStall = "Minimum tps value that the engine can continue to run at.\nGoing below this tps value will cause the engine to stall."
-    idleAddAthority = "The maximum tps % that the idle logic can add to the tps target."
+    idleAddAuthority = "The maximum tps % that the idle logic can add to the tps target."
     msqRtBcastBaseId = "Megasquirt's base message identifier used for realtime data broadcasting (typically set to 1520)."
 
 [Menu]
@@ -287,7 +287,7 @@
             graphLine = tVars_tpsTarget
         field = "Throttle Inhibit", throttleCtrl_bits_throttleInhibit
         field = "TPS Stall", tpsStall
-        field = "Idle Add Athority", idleAddAthority
+        field = "Idle Add Authority", idleAddAuthority
         panel = throttle_pid_coeffs
 
     dialog = ppsCalRange
@@ -319,7 +319,7 @@
 
     dialog = tpsTargetCalc0, "", yAxis
         field = "TPS Stall", tpsStall
-        field = "Idle Add Athority", idleAddAthority
+        field = "Idle Add Authority", idleAddAuthority
         gauge = tVars_idleAdderGauge
         gauge = tVars_ppsAdderGauge
 

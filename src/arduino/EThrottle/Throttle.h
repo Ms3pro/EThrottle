@@ -94,8 +94,8 @@ public:
     const uint16_t               tpsStall);
   
   void
-  setIdleAddAthority(
-    const uint8_t idleAddAthority);
+  setIdleAddAuthority(
+    const uint8_t idleAddAuthority);
   
   void
   setIdleAddFactor(
@@ -190,36 +190,35 @@ private:
     uint16_t tpsA_ = 0u;
     uint16_t tpsB_ = 0u;
     // finalized throttle position based on both A & B sensor readings
-    // range: [-10000 to 10000] (ie. -100 to 100%)
-    int16_t tps_ = 0u;
+    // range: [0 to 10000] (ie. 0 to 100%)
+    uint16_t tps_ = 0u;
 
     // ADC readings from pedal position sensors A & B
     // range: [0 to 1023]
     uint16_t ppsA_ = 0u;
     uint16_t ppsB_ = 0u;
     // finalized pedal position based on both A & B sensor readings
-    // range: [-10000 to 10000] (ie. -100 to 100%)
-    int16_t pps_ = 0u;
+    // range: [0 to 10000] (ie. 0 to 100%)
+    uint16_t pps_ = 0u;
 
     // Throttle position the PID controller is targeting
-    // tpsTarget_ = max(tpsStall_, tpsStall_ + idleAdder_ + ppsAdder_)
-    // range: [-10000 to 10000] (ie. -100 to 100%)
-    int16_t tpsTarget_ = 0u;
+    // range: [0 to 10000] (ie. 0 to 100%)
+    uint16_t tpsTarget_ = 0u;
 
     // the minimum tps value that the engine can continue to run.
     // going below this tps value will cause the engine to stall.
-    // range: [-10000 to 10000] (ie. -100 to 100%)
-    int16_t tpsStall_ = 0u;
+    // range: [0 to 10000] (ie. 0 to 100%)
+    uint16_t tpsStall_ = 0u;
 
     // the maximum tps % that the idle logic can add to the tps target.
     // should come from a flash table.
     // setting this to 0 will disable idle control.
     // range: [0 to MAX_IDLE_ADDER_AUTHORITY] (ie. 0=0%, 100=100%)
-    uint8_t idleAddAthority_ = 0u;
+    uint8_t idleAddAuthority_ = 0u;
 
-    // the requested percentage of the 'idleTpsAdderAthority_' to
+    // the requested percentage of the 'idleTpsAdderAuthority_' to
     // add to the 'tpsTarget_'
-    // range: [0 to 10000] (ie. 0 to 100% of the idleTpsAdderAthority_)
+    // range: [0 to 10000] (ie. 0 to 100% of the idleTpsAdderAuthority_)
     uint16_t idleAddFactor_ = 0u;
 
     // portion of the tpsTarget that's coming from engine idle control.
@@ -228,8 +227,8 @@ private:
 
     // portion of the tpsTarget that's coming from the accelerator pedal
     // ppsAdder = ((10000 - tpsStall_ - idleAdder) * pps) / 10000
-    // range: [-10000 to 10000] (ie. -100 to 100%)
-    int16_t ppsAdder_ = 0u;
+    // range: [0 to 10000] (ie. 0 to 100%)
+    uint16_t ppsAdder_ = 0u;
 
     // PWM motor driver output
     // range: [-255 to 255] if in h-bridge mode (negative means reverse)

@@ -51,18 +51,18 @@ uint8_t,word,,,,,,,,,,,,,,,,,,,,,
 struct,ThrottleOutVars_T,,,,,,,,,,,,,,,,,,,,,
 uint16_t,tpsA,,,,tpsA ADC value (raw),,ADC,1,0,adcMin,adcMax,,1,TPSA,Sensors,tpsA,adcMin,adcMin,adcMax,adcMax,0,0
 uint16_t,tpsB,,,,tpsB ADC value (raw),,ADC,1,0,adcMin,adcMax,,1,TPSB,Sensors,tpsB,adcMin,adcMin,adcMax,adcMax,0,0
-int16_t,tps,,,,finalized throttle position based on both A & B sensor readings,,%,0.01,0,0,100,2,1,TPS,Sensors,tps,-10,-10,110,110,0,0
+uint16_t,tps,,,,finalized throttle position based on both A & B sensor readings,,%,0.01,0,0,100,2,1,TPS,Sensors,tps,-10,-10,110,110,0,0
 uint16_t,ppsA,,,,ppsA ADC value (raw),,ADC,1,0,adcMin,adcMax,,1,PPSA,Sensors,ppsA,adcMin,adcMin,adcMax,adcMax,0,0
 uint16_t,ppsB,,,,ppsB ADC value (raw),,ADC,1,0,adcMin,adcMax,,1,PPSB,Sensors,ppsB,adcMin,adcMin,adcMax,adcMax,0,0
-int16_t,pps,,,,finalized pedal position based on both A & B sensor readings,,%,0.01,0,0,100,2,1,PPS,Sensors,pps,-10,-10,110,110,0,0
-int16_t,tpsTarget,,,,PID's target tps value,,%,0.01,0,0,100,2,1,TPS Target,Calculations,tpsTarget,-10,-10,110,110,0,0
+uint16_t,pps,,,,finalized pedal position based on both A & B sensor readings,,%,0.01,0,0,100,2,1,PPS,Sensors,pps,-10,-10,110,110,0,0
+uint16_t,tpsTarget,,,,PID's target tps value,,%,0.01,0,0,100,2,1,TPS Target,Calculations,tpsTarget,-10,-10,110,110,0,0
 int16_t,motorOut,,,,motor driver PWM output + dir,,PWM,1,0,-255,255,,1,Motor Out,Calculations,motorOut,-260,-260,260,260,0,0
 uint16_t,motorCurrent_mA,,,,motor current,,mA,1,0,0,3000,,,,Sensors,Motor Current,-10,-10,2000,2500,0,0
 ThrottleStatus_T,status,,,,status register for throttle PID,,,,,,,,,,,,,,,,,
 int16_t,ppsSafetyDelta,,,,delta in the redundant PPS sensor comparison,,ADC,1,0,-1023,1023,,,,Calculations,PPS Safety Delta,-60,-30,30,60,0,0
 int16_t,tpsSafetyDelta,,,,delta in the redundant TPS sensor comparison,,ADC,1,0,-1023,1023,,,,Calculations,TPS Safety Delta,-60,-30,30,60,0,0
 uint16_t,idleAdder,,,,portion of tps target from idle control,,%,0.01,0,0,100,2,1,Idle Adder,Calculations,Idle Adder,-10,-10,110,110,0,0
-int16_t,ppsAdder,,,,portion of tps target from pedal position,,%,0.01,0,0,100,2,1,PPS Adder,Calculations,PPS Adder,-10,-10,110,110,0,0
+uint16_t,ppsAdder,,,,portion of tps target from pedal position,,%,0.01,0,0,100,2,1,PPS Adder,Calculations,PPS Adder,-10,-10,110,110,0,0
 uint16_t,driverFB,,,,motor driver current feedback ADC value (raw),,ADC,1,0,adcMin,adcMax,,,,Sensors,driverFB,adcMin,adcMin,adcMax,adcMax,0,0
 uint8_t,ppsCompFaultCount,,,,PPS comparison fault counter (wraps),,,1,0,0,maxU08,,,,Status,PPS Comp Fault Count,-10,-10,10,20,0,0
 uint8_t,tpsCompFaultCount,,,,TPS comparison fault counter (wraps),,,1,0,0,maxU08,,,,Status,TPS Comp Fault Count,-10,-10,10,20,0,0
@@ -168,7 +168,7 @@ uint16_t,tpsCompCurve_yBins,,,SENSOR_COMPARE_CURVE_N_BINS,,,ADC,1,0,adcMin,adcMa
 uint16_t,ppsCompareThresh,,,,,,ADC,1,0,adcMin,adcMax,0,,,,,,,,,,
 uint16_t,tpsCompareThresh,,,,,,ADC,1,0,adcMin,adcMax,0,,,,,,,,,,
 uint16_t,tpsStall,,,,,,%,0.01,0,0,100,2,,,,,,,,,,
-int8_t,idleAddAthority,,,,,,%,1,0,0,MAX_IDLE_ADDER_AUTHORITY,0,,,,,,,,,,
+int8_t,idleAddAuthority,,,,,,%,1,0,0,MAX_IDLE_ADDER_AUTHORITY,0,,,,,,,,,,
 uint16_t,msqRtBcastBaseId,,,,,,,1,0,0,2047,0,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,
 struct,Page2_T,,,,,2,,,,,,,,,,,,,,,,

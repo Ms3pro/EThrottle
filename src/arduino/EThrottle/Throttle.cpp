@@ -186,10 +186,10 @@ Throttle::setSensorSetup(
 }
   
 void
-Throttle::setIdleAddAthority(
-  const uint8_t idleAddAthority)
+Throttle::setIdleAddAuthority(
+  const uint8_t idleAddAuthority)
 {
-  idleAddAthority_ = min(idleAddAthority, MAX_IDLE_ADDER_AUTHORITY);
+  idleAddAuthority_ = min(idleAddAuthority, MAX_IDLE_ADDER_AUTHORITY);
 }
 
 void
@@ -352,32 +352,23 @@ Throttle::doPedal()
   ppsB_ = adc::ppsB.value;
 
   // normalize PPS readings based on calibrated min/max values
-  const int16_t ppsA_Norm = map(ppsA_, ppsCalA_.min, ppsCalA_.max, 0, 10000);
-  const int16_t ppsB_Norm = map(ppsB_, ppsCalB_.min, ppsCalB_.max, 0, 10000);
-
-  DEBUG("ppsA: %d, ppsB: %d", ppsA_, ppsB_);
-  DEBUG("ppsA_Norm: %d, ppsB_Norm: %d", ppsA_Norm, ppsB_Norm);
+  const auto ppsA_Norm = static_cast<uint16_t>(map(ppsA_, ppsCalA_.min, ppsCalA_.max, 0, 10000));
+  const auto ppsB_Norm = static_cast<uint16_t>(map(ppsB_, ppsCalB_.min, ppsCalB_.max, 0, 10000));
 
   // safety check the raw ADC values
   if (sensorSetup_.comparePPS)
   {
-    const int16_t preferADC = (sensorSetup_.preferPPS_A ? ppsA_ : ppsB_);
-    const int16_t otherADC = (sensorSetup_.preferPPS_A ? ppsB_ : ppsA_);
+    const auto preferADC = (sensorSetup_.preferPPS_A ? ppsA_ : ppsB_);
+    const auto otherADC = (sensorSetup_.preferPPS_A ? ppsB_ : ppsA_);
 
     // lookup what we expect the other sensor's ADC value to be based
     // on the prefered sensor's reading.
-    const int16_t otherExpected = FlashUtils::lerpS16(
+    const auto otherExpected = FlashUtils::lerpU16(
       ppsCompDesc_.xBinsFlashOffset,
       ppsCompDesc_.yBinsFlashOffset,
       ppsCompDesc_.nBins,
       preferADC);
     ppsDelta_ = otherADC - otherExpected;
-    DEBUG(
-      "preferADC = %d, otherADC = %d, otherExpected = %d, ppsDelta = %d",
-      preferADC,
-      otherADC,
-      otherExpected,
-      ppsDelta_);
 
     // fault filtering logic
     const bool faulted = abs(ppsDelta_) >= ppsCompareThresh_;
@@ -408,14 +399,10 @@ Throttle::doPedal()
     // accelerator pedal.
     // Note: pps_ can get set to 0% if PPS safety checks fail.
     pps_ = (sensorSetup_.preferPPS_A ? ppsA_Norm : ppsB_Norm);
-    if (pps_ < 0) {
-      pps_ = 0;
-    } else if (pps_ > 10000) {
-      pps_ = 10000;
+    if (pps_ > 10000u) {
+      pps_ = 10000u;
     }
   }
-
-  DEBUG("pps_: %d", pps_);
 }
 
 void
@@ -425,30 +412,23 @@ Throttle::doThrottle()
   tpsB_ = adc::tpsB.value;
 
   // normalize TPS readings based on calibrated min/max values
-  const int16_t tpsA_Norm = map(tpsA_, tpsCalA_.min, tpsCalA_.max, 0, 10000);
-  const int16_t tpsB_Norm = map(tpsB_, tpsCalB_.min, tpsCalB_.max, 0, 10000);
-  DEBUG("tpsA: %d, tpsB: %d", tpsA_Norm, tpsB_Norm);
+  const auto tpsA_Norm = static_cast<uint16_t>(map(tpsA_, tpsCalA_.min, tpsCalA_.max, 0, 10000));
+  const auto tpsB_Norm = static_cast<uint16_t>(map(tpsB_, tpsCalB_.min, tpsCalB_.max, 0, 10000));
 
   // safety check the raw ADC values
   if (sensorSetup_.compareTPS)
   {
-    const int16_t preferADC = (sensorSetup_.preferTPS_A ? tpsA_ : tpsB_);
-    const int16_t otherADC = (sensorSetup_.preferTPS_A ? tpsB_ : tpsA_);
+    const auto preferADC = (sensorSetup_.preferTPS_A ? tpsA_ : tpsB_);
+    const auto otherADC = (sensorSetup_.preferTPS_A ? tpsB_ : tpsA_);
 
     // lookup what we expect the other sensor's ADC value to be based
     // on the prefered sensor's reading.
-    const int16_t otherExpected = FlashUtils::lerpS16(
+    const auto otherExpected = FlashUtils::lerpU16(
       tpsCompDesc_.xBinsFlashOffset,
       tpsCompDesc_.yBinsFlashOffset,
       tpsCompDesc_.nBins,
       preferADC);
     tpsDelta_ = otherADC - otherExpected;
-    DEBUG(
-      "preferADC = %d, otherADC = %d, otherExpected = %d, tpsDelta = %d",
-      preferADC,
-      otherADC,
-      otherExpected,
-      tpsDelta_);
 
     // fault filtering logic
     const bool faulted = abs(tpsDelta_) >= tpsCompareThresh_;
@@ -490,7 +470,7 @@ Throttle::doThrottle()
     {
       case SetpointSource::PPS:
       {
-        idleAdder_ = static_cast<uint32_t>(idleAddAthority_) * idleAddFactor_ / 100u;
+        idleAdder_ = static_cast<uint32_t>(idleAddAuthority_) * idleAddFactor_ / 100u;
         ppsAdder_ = (static_cast<int32_t>(10000 - tpsStall_ - idleAdder_) * pps_) / 10000;
         tpsTarget_ = tpsStall_ + idleAdder_ + ppsAdder_;
         break;
@@ -500,15 +480,20 @@ Throttle::doThrottle()
         break;
     }
 
-    // don't let tps target go below the stall point or above 100%
-    tpsTarget_ = max(tpsStall_, tpsTarget_);
-    tpsTarget_ = min(static_cast<int16_t>(10000u), tpsTarget_);
+    // clamp the tpsTarget_ within tpsStall_ and 100%
+    if (tpsTarget_ > 11000u)
+    {
+      // >110% probably means we underflowed, so clamp to tpsStall_
+      tpsTarget_ = tpsStall_;
+    }
+    else if (tpsTarget_ > 10000u)
+    {
+      tpsTarget_ = 10000u;
+    }
 
-    pidSetpoint_ = tpsTarget_;  
-    pidIn_ = tps_;
+    pidSetpoint_ = static_cast<double>(tpsTarget_);
+    pidIn_ = static_cast<double>(tps_);
     newCycle = pid_.Compute();
-
-    DEBUG("pidIn_: %f", pidIn_);
 
     // handle PID auto-tune logic
     if (status_.pidAutoTuneBusy) {
@@ -529,13 +514,13 @@ Throttle::doThrottle()
     // negative PWM means we need to close throttle; results in inverse
     // motor polarity in H-Bridge driver use cases, or just undriven
     // motor otherwise (relies on throttle body return spring to close)
-    motorOut_ = pidOut_;
+    motorOut_ = static_cast<int16_t>(pidOut_);
   }
   else
   {
-    tpsTarget_ = 0;
-    motorOut_ = 0;
-    motorCurrent_mA_ = 0;
+    tpsTarget_ = 0u;
+    motorOut_ = 0u;
+    motorCurrent_mA_ = 0u;
   }
 
   // make sure ADC conversions are running correctly
@@ -653,7 +638,7 @@ loadFlashPage1ToThrottle(
   {
     throttle.enableThrottle();
   }
-  throttle.setIdleAddAthority(EEPROM.read(FIELD_OFFSET_CFG_PAGE1(idleAddAthority)));
+  throttle.setIdleAddAuthority(EEPROM.read(FIELD_OFFSET_CFG_PAGE1(idleAddAuthority)));
 
   // PID coefs.
   throttle.updatePID_Coeffs(
