@@ -504,19 +504,20 @@
 
     ;----------------------------------------------------------------------------
     ; Indicators
-    ;               expr                               off-label           on-label,           off-bg, off-fg, on-bg,  on-fg
-    indicator     = {status0_bits_needsBurn},          "Need Burn",        "Need Burn",        white,  black,  red,    black
-    indicator     = {status0_bits_flashDataLost},      "Flash Data Lost",  "Flash Data Lost",  white,  black,  red,    black
-    indicator     = {mcusr_bits_porf},                 "Power-On RST",     "Power-On RST",     white,  black,  green,  black
-    indicator     = {mcusr_bits_extrf},                "External RST",     "External RST",     white,  black,  green,  black
-    indicator     = {mcusr_bits_borf},                 "Brownout RST",     "Brownout RST",     white,  black,  red,    black
-    indicator     = {mcusr_bits_wdrf},                 "Watchdog RST",     "Watchdog RST",     white,  black,  red,    black
-    indicator     = {tVars_status_throttleEnabled},    "THROTTLE DISABLED","THROTTLE ENABLED", yellow, black,  green,  black
-    indicator     = {tVars_status_motorEnabled},       "MOTOR DISABLED",   "MOTOR ENABLED",    yellow, black,  green,  black
-    indicator     = {tVars_status_ppsComparisonFault}, "PPS Comp OK",      "PPS Comp FAULT",   green,  black,  red,    black
-    indicator     = {tVars_status_tpsComparisonFault}, "TPS Comp OK",      "TPS Comp FAULT",   green,  black,  red,    black
-    indicator     = {tVars_status_motorDriverFault},   "Driver OK",        "Driver FAULT",     green,  black,  red,    black
-    indicator     = {tVars_status_adcStalled},         "ADC Running",      "ADC Stalled",      green,  black,  red,    black
+    ;               expr                                   off-label            on-label,             off-bg, off-fg, on-bg,  on-fg
+    indicator     = {status0_bits_needsBurn},              "Need Burn",         "Need Burn",          white,  black,  red,    black
+    indicator     = {status0_bits_flashDataLost},          "Flash Data Lost",   "Flash Data Lost",    white,  black,  red,    black
+    indicator     = {status0_bits_msqRT_BCastListenFault}, "BCast Listen OK",   "BCast Listen Fault", white,  black,  red,    black
+    indicator     = {mcusr_bits_porf},                     "Power-On RST",      "Power-On RST",       white,  black,  green,  black
+    indicator     = {mcusr_bits_extrf},                    "External RST",      "External RST",       white,  black,  green,  black
+    indicator     = {mcusr_bits_borf},                     "Brownout RST",      "Brownout RST",       white,  black,  red,    black
+    indicator     = {mcusr_bits_wdrf},                     "Watchdog RST",      "Watchdog RST",       white,  black,  red,    black
+    indicator     = {tVars_status_throttleEnabled},        "THROTTLE DISABLED", "THROTTLE ENABLED",   yellow, black,  green,  black
+    indicator     = {tVars_status_motorEnabled},           "MOTOR DISABLED",    "MOTOR ENABLED",      yellow, black,  green,  black
+    indicator     = {tVars_status_ppsComparisonFault},     "PPS Comp OK",       "PPS Comp FAULT",     green,  black,  red,    black
+    indicator     = {tVars_status_tpsComparisonFault},     "TPS Comp OK",       "TPS Comp FAULT",     green,  black,  red,    black
+    indicator     = {tVars_status_motorDriverFault},       "Driver OK",         "Driver FAULT",       green,  black,  red,    black
+    indicator     = {tVars_status_adcStalled},             "ADC Running",       "ADC Stalled",        green,  black,  red,    black
 
     ;-------------------------------------------------------------------------------
 

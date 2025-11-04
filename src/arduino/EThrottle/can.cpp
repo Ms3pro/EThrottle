@@ -69,6 +69,7 @@ canSetup()
   pinMode(CAN_INT, INPUT_PULLUP);// Configuring pin for CAN interrupt input
   attachInterrupt(digitalPinToInterrupt(CAN_INT), canISR, LOW);
 
+  outPC.status0.bits.msqRT_BCastListenFault = 1u; // start at 1 until proven okay
   ecuRtBcastBaseId = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(msqRtBcastBaseId));
 
   sei();// enable interrupts
@@ -175,11 +176,13 @@ EThrottleCAN::handleStandard(
     auto msg0 = reinterpret_cast<const MegaCAN::RtMsg00_t *>(data);
     ecu::seconds = msg0->seconds();
     ecu::rpm     = msg0->rpm();
+    rtMsgCount_++;
   }
   else if (msgId == 6)
   {
     auto msg6 = reinterpret_cast<const MegaCAN::RtMsg06_t *>(data);
     ecu::idleDuty = static_cast<uint32_t>(msg6->iacstep()) * 392u / 10u;
+    rtMsgCount_++;
   }
 }
 

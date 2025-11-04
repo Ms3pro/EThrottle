@@ -6,6 +6,7 @@
 #include "config.h"
 #include "ecu_vars.h"
 #include <EndianUtils.h>
+#include "health_monitor.h"
 #include <logging_impl_lite.h>
 #include "Throttle.h"
 
@@ -15,6 +16,8 @@ Throttle throttle(
   DRIVER_P,DRIVER_N,
   DRIVER_DIS,
   DRIVER_FS);
+
+HealthMonitor healthMonitor(&canDev, &throttle);
 
 // setup watchdog
 void wdtInit() {
@@ -78,10 +81,12 @@ void setup() {
 
 void loop() {
   wdt_reset();// throw watchdog a bone
-  uint32_t loopStartTimeUs = micros();
+  const auto loopStartTimeUs = micros();
 
+  healthMonitor.run();
   canLoop();
-  throttle.setIdleAddFactor(ecu::idleDuty); // TODO add logic to detect if CAN comms is healthy
+  throttle.setIdleAddFactor(
+    healthMonitor.getStatus().bits.ecuRtDataOkay ? ecu::idleDuty : 0u);
   throttle.run();
 
   // update ADC status
@@ -97,6 +102,6 @@ void loop() {
     ecu::idleDuty);
 
   // update loop time register
-  uint16_t loopTimeUs = micros() - loopStartTimeUs;
+  const auto loopTimeUs = static_cast<uint16_t>(micros() - loopStartTimeUs);
   EndianUtils::setBE(outPC.loopTimeUs, loopTimeUs);
 }

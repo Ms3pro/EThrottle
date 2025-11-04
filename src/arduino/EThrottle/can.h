@@ -25,6 +25,9 @@ public:
 			const MegaCAN::TableDescriptor_t *tables,
 			uint8_t numTables);
 
+  inline uint8_t getRtMsgCount() const {return rtMsgCount_;}
+  inline void resetRtMsgCount() {rtMsgCount_ = 0u;}
+
 protected:
   /**
    * override this base method so that we can override default options
@@ -68,6 +71,7 @@ protected:
 		const uint8_t *data) override;
 
 private:
+  volatile uint8_t rtMsgCount_ = 0u;
 
 };
 
