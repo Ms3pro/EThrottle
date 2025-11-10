@@ -249,6 +249,7 @@
             subMenu = can_outpc_bcast_2, "CAN Realtime Data Broadcasting 2", {rtBcast_ctrl_bits_enabled}
             subMenu = std_separator
             subMenu = diagnostics, "Diagnostics"
+            subMenu = testControls, "Test Mode"
 
 ;-------------------------------------------------------------------------------
 
@@ -262,11 +263,15 @@
 ; and may create error messages.
 ; It is expected that these commands would not typically alter any ram mapped to a Constant.
   ;                              tableId, offsetMSB, offsetLSB, lenMSB, lenLSB, data[0], data[1], ..., data[len-1]
-  cmdClrAllFaults = "w\$tsCanId\x03\x00\x00\x00\x03\x63\x41\x00"  ; uartCmd = "cA"
-  cmdClrDriverFault = "w\$tsCanId\x03\x00\x00\x00\x03\x63\x64\x00"  ; uartCmd = "cd"
-  cmdClrPPS_Fault = "w\$tsCanId\x03\x00\x00\x00\x03\x63\x70\x00"  ; uartCmd = "cp"
-  cmdClrTPS_Fault = "w\$tsCanId\x03\x00\x00\x00\x03\x63\x74\x00"  ; uartCmd = "ct"
-  cmdSoftReset = "w\$tsCanId\x03\x00\x00\x00\x02\x72\x00"  ; uartCmd = "r"
+  cmdClrAllFaults = "w\$tsCanId\x04\x00\x00\x00\x03\x63\x41\x00"  ; uartCmd = "cA"
+  cmdClrDriverFault = "w\$tsCanId\x04\x00\x00\x00\x03\x63\x64\x00"  ; uartCmd = "cd"
+  cmdClrPPS_Fault = "w\$tsCanId\x04\x00\x00\x00\x03\x63\x70\x00"  ; uartCmd = "cp"
+  cmdClrTPS_Fault = "w\$tsCanId\x04\x00\x00\x00\x03\x63\x74\x00"  ; uartCmd = "ct"
+  cmdSoftReset = "w\$tsCanId\x04\x00\x00\x00\x02\x72\x00"  ; uartCmd = "r"
+  ;                                                  t   e   s   t   O   F   F   \0
+  cmdStopTestmode = "w\$tsCanId\x04\x00\x00\x00\x08\x74\x65\x73\x74\x4f\x46\x46\x00"  ; uartCmd = "testOFF"
+  ;                                                   t   e   s   t   O   N   \0
+  cmdEnterTestMode = "w\$tsCanId\x04\x00\x00\x00\x07\x74\x65\x73\x74\x4f\x4e\x00"  ; uartCmd = "testON"
 
 [UserDefined]
     dialog = sensorSafetySetup, "Sensor Safety"
@@ -413,6 +418,24 @@
         panel = diagMCU_StatusControl
         panel = diagThrottleEnables
         panel = diagThrottleFaults
+
+    dialog = testButtons, "", xAxis
+        commandButton = "Enable Test Mode", cmdEnterTestMode, { (status0_bits_testModeEnabled == 0) }
+
+        ; if clickOnCloseIfEnabled is set, then the command assigned to this button will be run on the 
+        ; dialog close, but only if the enable condition is true
+        ; valid click flags are:
+        ; clickOnCloseIfEnabled - the command will be sent on dialog close if active condition is true
+        ; clickOnCloseIfDisabled - the command will be sent on dialog close if active condition is false
+        ; clickOnClose - the command will be sent on dialog close always
+        commandButton = "Disable Test Mode", cmdStopTestmode, { (status0_bits_testModeEnabled == 1) }, clickOnCloseIfEnabled
+
+    dialog = testControlFields, "", yAxis
+        field = "Throttle Setpoint", testSetpoint
+
+    dialog = testControls, "Test Mode", yAxis
+        panel = testButtons
+        panel = testControlFields
         
     dialog = ppsCompareGraph, "", yAxis
         liveGraph = timePpsCompareGraph, ""
@@ -508,6 +531,7 @@
     indicator     = {status0_bits_needsBurn},              "Need Burn",         "Need Burn",          white,  black,  red,    black
     indicator     = {status0_bits_flashDataLost},          "Flash Data Lost",   "Flash Data Lost",    white,  black,  red,    black
     indicator     = {status0_bits_msqRT_BCastListenFault}, "BCast Listen OK",   "BCast Listen Fault", white,  black,  red,    black
+    indicator     = {status0_bits_testModeEnabled},        "Test Mode OFF",     "Test Mode ON",       white,  black,  green,  black
     indicator     = {mcusr_bits_porf},                     "Power-On RST",      "Power-On RST",       white,  black,  green,  black
     indicator     = {mcusr_bits_extrf},                    "External RST",      "External RST",       white,  black,  green,  black
     indicator     = {mcusr_bits_borf},                     "Brownout RST",      "Brownout RST",       white,  black,  red,    black

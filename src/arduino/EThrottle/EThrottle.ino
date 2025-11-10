@@ -71,6 +71,10 @@ void setup() {
   outPC.mcusr.word = 0;// arduino bootloader doesn't preserve MCUSR contents
 #endif
 
+  // configure test mode defaults
+  outPC.status0.bits.testModeEnabled = 0u;
+  testPage.testSetpoint = 0u;
+
   throttle.init(PID_SAMPLE_RATE_MS, throttleVars);
   loadFlashPage1ToThrottle(throttle);
 
@@ -85,8 +89,16 @@ void loop() {
 
   healthMonitor.run();
   canLoop();
-  throttle.setIdleAddFactor(
-    healthMonitor.getStatus().bits.ecuRtDataOkay ? ecu::idleDuty : 0u);
+  outPC.status0.bits.msqRT_BCastListenFault = ! healthMonitor.getStatus().bits.ecuRtDataOkay;
+  if (outPC.status0.bits.testModeEnabled)
+  {
+    throttle.setSetpointOverride(EndianUtils::getBE(testPage.testSetpoint));
+  }
+  else
+  {
+    throttle.setIdleAddFactor(
+      healthMonitor.getStatus().bits.ecuRtDataOkay ? ecu::idleDuty : 0u);
+  }
   throttle.run();
 
   // update ADC status

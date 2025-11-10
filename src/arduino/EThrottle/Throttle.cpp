@@ -201,15 +201,13 @@ Throttle::setIdleAddFactor(
 
 void
 Throttle::setSetpointOverride(
-  double value)
+  uint16_t setpoint)
 {
-  if (setpointSource_ == SetpointSource::User)
+  if (setpoint > 10000)
   {
-    if (value >= 0.0 && value <= 100.0)
-    {
-      userSetpoint_ = value * 100.0;
-    }
+    setpoint = 10000;
   }
+  userSetpoint_ = setpoint;
 }
 
 const ThrottleStatus_T &

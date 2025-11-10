@@ -102,14 +102,13 @@ public:
     const uint16_t idleAddFactor);
 
   /**
-   * Setter for the override setpoint value. Only does something if
-   * the setpoint source is set to 'User' via setSetpointSource().
-   * @param[in] value
-   * the override value in percent (0.0 to 100.0)
+   * Setter for the override setpoint value.
+   * @param[in] setpoint
+   * the override value in percent [0 to 10000] (ie. 0 to 100%)
    */
   void
   setSetpointOverride(
-    double value);
+    uint16_t setpoint);
 
   const ThrottleStatus_T &
   status() const;

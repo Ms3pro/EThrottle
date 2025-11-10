@@ -1,3 +1,4 @@
+#include "EThrottleTables.h"
 #include "can.h"
 
 #include <Arduino.h>
@@ -101,12 +102,8 @@ processCMD(
   const uint8_t * cmd,
   uint8_t         len)
 {
-  if (len < 1) {
-    return;
-  }
-
-  switch ((char)(cmd[0])) {
-    case 'r':
+  if (strncmp(cmd, "r", MAX_UART_CMD_LEN) == 0)
+  {
 #if WATCHDOG_SUPPORT
       // soft reset MCU via watchdog timeout
       cli();
@@ -115,8 +112,37 @@ processCMD(
 #else
       WARN("cant reset. WATCHDOG is OFF");
 #endif
-      break;
   }
+  else if (strncmp(cmd, "testON", MAX_UART_CMD_LEN) == 0)
+  {
+    throttle.setSetpointSource(Throttle::SetpointSource::User);
+    outPC.status0.bits.testModeEnabled = 1u;
+  }
+  else if (strncmp(cmd, "testOFF", MAX_UART_CMD_LEN) == 0)
+  {
+    throttle.setSetpointSource(Throttle::SetpointSource::PPS);
+    outPC.status0.bits.testModeEnabled = 0u;
+  }
+  else
+  {
+    WARN("bad UART cmd");
+  }
+}
+
+void
+processTestPageWrite(
+  const uint16_t  offset,
+  const uint8_t * data,
+  uint8_t         len)
+{
+  if ((offset + len) > sizeof(TestPage_T))
+  {
+    ERROR("writing past end of TestPage_T");
+    return;
+  }
+
+  auto dest = reinterpret_cast<uint8_t *>(&testPage) + offset;
+  memcpy(dest, data, len);
 }
 
 EThrottleCAN::EThrottleCAN(
@@ -198,6 +224,11 @@ EThrottleCAN::writeToTable(
   if (tableId == TableId::UART_CMD)
   {
     processCMD(data, len);
+    return true;
+  }
+  else if (tableId == TableId::TEST_PAGE)
+  {
+    processTestPageWrite(offset, data, len);
     return true;
   }
   else
