@@ -640,23 +640,23 @@ loadFlashPage1ToThrottle(
 
   // PID coefs.
   throttle.updatePID_Coeffs(
-    FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKp)) / 100.0,
-    FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKi)) / 100.0,
-    FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKd)) / 100.0);
+    FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKp)) / 100.0,
+    FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKi)) / 100.0,
+    FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(throttleKd)) / 100.0);
 
   // sensor range calibrations
   RangeCalibration rc;
-  rc.min = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalA.min));
-  rc.max = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalA.max));
+  rc.min = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalA.min));
+  rc.max = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalA.max));
   throttle.setRangeCalPPS_A(rc);
-  rc.min = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalB.min));
-  rc.max = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalB.max));
+  rc.min = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalB.min));
+  rc.max = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCalB.max));
   throttle.setRangeCalPPS_B(rc);
-  rc.min = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalA.min));
-  rc.max = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalA.max));
+  rc.min = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalA.min));
+  rc.max = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalA.max));
   throttle.setRangeCalTPS_A(rc);
-  rc.min = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalB.min));
-  rc.max = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalB.max));
+  rc.min = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalB.min));
+  rc.max = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCalB.max));
   throttle.setRangeCalTPS_B(rc);
 
   // load sensor setup
@@ -677,16 +677,16 @@ loadFlashPage1ToThrottle(
     setupU.bits,
     ppsFTD,
     tpsFTD,
-    FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCompareThresh)),
-    FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCompareThresh)),
-    FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsStall)));
+    FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCompareThresh)),
+    FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCompareThresh)),
+    FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsStall)));
 }
 
 void
 storeThrottlePID_ToFlash(
   Throttle &throttle)
 {
-  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKp), (uint16_t)(throttle.getKp() * 100.0));
-  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKi), (uint16_t)(throttle.getKi() * 100.0));
-  FlashUtils::flashWrite_BE(FIELD_OFFSET_CFG_PAGE1(throttleKd), (uint16_t)(throttle.getKd() * 100.0));
+  FlashUtils::writeBE(FIELD_OFFSET_CFG_PAGE1(throttleKp), (uint16_t)(throttle.getKp() * 100.0));
+  FlashUtils::writeBE(FIELD_OFFSET_CFG_PAGE1(throttleKi), (uint16_t)(throttle.getKi() * 100.0));
+  FlashUtils::writeBE(FIELD_OFFSET_CFG_PAGE1(throttleKd), (uint16_t)(throttle.getKd() * 100.0));
 }

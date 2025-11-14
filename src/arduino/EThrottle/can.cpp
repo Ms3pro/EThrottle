@@ -71,7 +71,7 @@ canSetup()
   attachInterrupt(digitalPinToInterrupt(CAN_INT), canISR, LOW);
 
   outPC.status0.bits.msqRT_BCastListenFault = 1u; // start at 1 until proven okay
-  ecuRtBcastBaseId = FlashUtils::flashRead_BE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(msqRtBcastBaseId));
+  ecuRtBcastBaseId = FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(msqRtBcastBaseId));
 
   sei();// enable interrupts
 }
