@@ -626,16 +626,7 @@ loadFlashPage1ToThrottle(
   Throttle &throttle)
 {
   // misc. control params
-  ThrottleControl tCtrl;
-  tCtrl.word = EEPROM.read(FIELD_OFFSET_CFG_PAGE1(throttleCtrl));
-  if (tCtrl.bits.throttleInhibit)
-  {
-    throttle.disableThrottle();
-  }
-  else
-  {
-    throttle.enableThrottle();
-  }
+  restoreThrottleEnableFromInhibit(throttle);
   throttle.setIdleAddAuthority(EEPROM.read(FIELD_OFFSET_CFG_PAGE1(idleAddAuthority)));
 
   // PID coefs.
@@ -689,4 +680,20 @@ storeThrottlePID_ToFlash(
   FlashUtils::writeBE(FIELD_OFFSET_CFG_PAGE1(throttleKp), (uint16_t)(throttle.getKp() * 100.0));
   FlashUtils::writeBE(FIELD_OFFSET_CFG_PAGE1(throttleKi), (uint16_t)(throttle.getKi() * 100.0));
   FlashUtils::writeBE(FIELD_OFFSET_CFG_PAGE1(throttleKd), (uint16_t)(throttle.getKd() * 100.0));
+}
+
+void
+restoreThrottleEnableFromInhibit(
+  Throttle &throttle)
+{
+  ThrottleControl tCtrl;
+  tCtrl.word = EEPROM.read(FIELD_OFFSET_CFG_PAGE1(throttleCtrl));
+  if (tCtrl.bits.throttleInhibit)
+  {
+    throttle.disableThrottle();
+  }
+  else
+  {
+    throttle.enableThrottle();
+  }
 }

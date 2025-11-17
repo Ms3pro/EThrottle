@@ -248,8 +248,8 @@
             subMenu = can_outpc_bcast,   "CAN Realtime Data Broadcasting"
             subMenu = can_outpc_bcast_2, "CAN Realtime Data Broadcasting 2", {rtBcast_ctrl_bits_enabled}
             subMenu = std_separator
-            subMenu = diagnostics, "Diagnostics"
-            subMenu = testControls, "Test Mode"
+            subMenu = diagnostics, "Test Mode - Diagnostics"
+            subMenu = testControls, "Test Mode - Manual Control"
 
 ;-------------------------------------------------------------------------------
 
@@ -268,10 +268,16 @@
   cmdClrPPS_Fault = "w\$tsCanId\x04\x00\x00\x00\x03\x63\x70\x00"  ; uartCmd = "cp"
   cmdClrTPS_Fault = "w\$tsCanId\x04\x00\x00\x00\x03\x63\x74\x00"  ; uartCmd = "ct"
   cmdSoftReset = "w\$tsCanId\x04\x00\x00\x00\x02\x72\x00"  ; uartCmd = "r"
-  ;                                                  t   e   s   t   O   F   F   \0
-  cmdStopTestmode = "w\$tsCanId\x04\x00\x00\x00\x08\x74\x65\x73\x74\x4f\x46\x46\x00"  ; uartCmd = "testOFF"
-  ;                                                   t   e   s   t   O   N   \0
-  cmdEnterTestMode = "w\$tsCanId\x04\x00\x00\x00\x07\x74\x65\x73\x74\x4f\x4e\x00"  ; uartCmd = "testON"
+  ;                                                     t   e   s   t   E   \0
+  cmdTestModeEnable  = "w\$tsCanId\x04\x00\x00\x00\x06\x74\x65\x73\x74\x45\x00"  ; uartCmd = "testE"
+  ;                                                     t   e   s   t   D   \0
+  cmdTestModeDisable = "w\$tsCanId\x04\x00\x00\x00\x06\x74\x65\x73\x74\x44\x00"  ; uartCmd = "testD"
+  ;                                                     t   e   s   t   I   \0
+  cmdTestModeIdle    = "w\$tsCanId\x04\x00\x00\x00\x06\x74\x65\x73\x74\x49\x00"  ; uartCmd = "testI"
+  ;                                                     t   e   s   t   S   \0
+  cmdTestModeSingle  = "w\$tsCanId\x04\x00\x00\x00\x06\x74\x65\x73\x74\x53\x00"  ; uartCmd = "testS"
+  ;                                                     t   e   s   t   C   \0
+  cmdTestModeCurve   = "w\$tsCanId\x04\x00\x00\x00\x06\x74\x65\x73\x74\x43\x00"  ; uartCmd = "testC"
 
 [UserDefined]
     dialog = sensorSafetySetup, "Sensor Safety"
@@ -414,13 +420,13 @@
         panel = indsThrottleFaults
         panel = diagClrFaultBtns
 
-    dialog = diagnostics, "", yAxis
+    dialog = diagnostics, "Test Mode - Diagnostics", yAxis
         panel = diagMCU_StatusControl
         panel = diagThrottleEnables
         panel = diagThrottleFaults
 
-    dialog = testButtons, "", xAxis
-        commandButton = "Enable Test Mode", cmdEnterTestMode, { (status0_bits_testModeEnabled == 0) }
+    dialog = testModeEnableButtons, "", xAxis
+        commandButton = "Enable Test Mode", cmdTestModeEnable, { status1_bits_testModeEnabled == 0 }
 
         ; if clickOnCloseIfEnabled is set, then the command assigned to this button will be run on the 
         ; dialog close, but only if the enable condition is true
@@ -428,14 +434,34 @@
         ; clickOnCloseIfEnabled - the command will be sent on dialog close if active condition is true
         ; clickOnCloseIfDisabled - the command will be sent on dialog close if active condition is false
         ; clickOnClose - the command will be sent on dialog close always
-        commandButton = "Disable Test Mode", cmdStopTestmode, { (status0_bits_testModeEnabled == 1) }, clickOnCloseIfEnabled
+        commandButton = "Disable Test Mode", cmdTestModeDisable, { status1_bits_testModeEnabled == 1 }, clickOnCloseIfEnabled
 
-    dialog = testControlFields, "", yAxis
+    dialog = testModeSingleFields, "", yAxis
         field = "Throttle Setpoint", testSetpoint
 
-    dialog = testControls, "Test Mode", yAxis
-        panel = testButtons
-        panel = testControlFields
+    dialog = testModeSingleButtons, "", yAxis
+        commandButton = "Start", cmdTestModeSingle, { status1_bits_testMode == 0 }
+        commandButton = "Stop", cmdTestModeIdle, { status1_bits_testMode == 1 }
+
+    dialog = testModeSinglePanel, "Single Setpoint", xAxis
+        panel = testModeSingleFields
+        panel = testModeSingleButtons
+
+    dialog = testModeCurveFields, "", yAxis
+        panel = ppsCompareCurvePreferA
+
+    dialog = testModeCurveButtons, "", yAxis
+        commandButton = "Start", cmdTestModeCurve, { status1_bits_testMode == 0 }
+        commandButton = "Stop", cmdTestModeIdle, { status1_bits_testMode == 2 }
+
+    dialog = testModeCurvePanel, "Curve Playback", xAxis
+        panel = testModeCurveFields
+        panel = testModeCurveButtons
+
+    dialog = testControls, "Test Mode - Manual Control", yAxis
+        panel = testModeEnableButtons
+        panel = testModeSinglePanel, { status1_bits_testModeEnabled == 1 }
+        panel = testModeCurvePanel, { status1_bits_testModeEnabled == 1 }
         
     dialog = ppsCompareGraph, "", yAxis
         liveGraph = timePpsCompareGraph, ""
@@ -531,7 +557,7 @@
     indicator     = {status0_bits_needsBurn},              "Need Burn",         "Need Burn",          white,  black,  red,    black
     indicator     = {status0_bits_flashDataLost},          "Flash Data Lost",   "Flash Data Lost",    white,  black,  red,    black
     indicator     = {status0_bits_msqRT_BCastListenFault}, "BCast Listen OK",   "BCast Listen Fault", white,  black,  red,    black
-    indicator     = {status0_bits_testModeEnabled},        "Test Mode OFF",     "Test Mode ON",       white,  black,  green,  black
+    indicator     = {status1_bits_testModeEnabled},        "Test Mode OFF",     "Test Mode ON",       white,  black,  green,  black
     indicator     = {mcusr_bits_porf},                     "Power-On RST",      "Power-On RST",       white,  black,  green,  black
     indicator     = {mcusr_bits_extrf},                    "External RST",      "External RST",       white,  black,  green,  black
     indicator     = {mcusr_bits_borf},                     "Brownout RST",      "Brownout RST",       white,  black,  red,    black

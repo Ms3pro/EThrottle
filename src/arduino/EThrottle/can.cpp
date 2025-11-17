@@ -8,6 +8,7 @@
 #include <FlashUtils.h>
 #include <MegaCAN_ExtDevice.h>
 #include <MSG_defn.h>
+#include "test_controller.h"
 #include "Throttle.h"
 
 DECL_MEGA_CAN_REV("EThrottle");
@@ -39,9 +40,6 @@ canISR()
 
   EIMSK |= (1 << INT1);// reenable external interrupt
 }
-
-// declared in EThrottle.ino
-extern Throttle throttle;
 
 // called any time a table is burned to over CAN
 void
@@ -99,8 +97,8 @@ canLoop()
 
 void
 processCMD(
-  const uint8_t * cmd,
-  uint8_t         len)
+  const char * cmd,
+  uint8_t      len)
 {
   if (strncmp(cmd, "r", MAX_UART_CMD_LEN) == 0)
   {
@@ -113,15 +111,26 @@ processCMD(
       WARN("cant reset. WATCHDOG is OFF");
 #endif
   }
-  else if (strncmp(cmd, "testON", MAX_UART_CMD_LEN) == 0)
+  else if (cmd[0] == 't' && cmd[1] == 'e' && cmd[2] == 's' && cmd[3] == 't')
   {
-    throttle.setSetpointSource(Throttle::SetpointSource::User);
-    outPC.status0.bits.testModeEnabled = 1u;
-  }
-  else if (strncmp(cmd, "testOFF", MAX_UART_CMD_LEN) == 0)
-  {
-    throttle.setSetpointSource(Throttle::SetpointSource::PPS);
-    outPC.status0.bits.testModeEnabled = 0u;
+    switch (cmd[4])
+    {
+      case 'E':// enable
+        testController.onEnableCmd(true);
+        break;
+      case 'D':// disable
+        testController.onEnableCmd(false);
+        break;
+      case 'I':
+        testController.onModeCmd(TestModes::Idle);
+        break;
+      case 'S':
+        testController.onModeCmd(TestModes::SingleSetpoint);
+        break;
+      case 'C':
+        testController.onModeCmd(TestModes::CurvePlayback);
+        break;
+    }
   }
   else
   {
@@ -223,7 +232,7 @@ EThrottleCAN::writeToTable(
   // intercept table writes to the command buffer, and handle them directly
   if (tableId == TableId::UART_CMD)
   {
-    processCMD(data, len);
+    processCMD(reinterpret_cast<const char *>(data), len);
     return true;
   }
   else if (tableId == TableId::TEST_PAGE)

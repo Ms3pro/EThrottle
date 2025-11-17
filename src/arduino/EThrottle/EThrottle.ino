@@ -1,13 +1,15 @@
 #include <avr/sfr_defs.h>
 #include <avr/wdt.h>
 
+#include <EndianUtils.h>
+#include <logging_impl_lite.h>
+
 #include "adc_ctrl.h"
 #include "can.h"
 #include "config.h"
 #include "ecu_vars.h"
-#include <EndianUtils.h>
 #include "health_monitor.h"
-#include <logging_impl_lite.h>
+#include "test_controller.h"
 #include "Throttle.h"
 
 ThrottleOutVars_T *throttleVars = &outPC.tVars;
@@ -18,6 +20,8 @@ Throttle throttle(
   DRIVER_FS);
 
 HealthMonitor healthMonitor(&canDev, &throttle);
+
+TestController testController;
 
 // setup watchdog
 void wdtInit() {
@@ -58,7 +62,7 @@ void setup() {
   __asm__ __volatile__ ( "mov %0, r2 \n" : "=r" (mcusr) : );
 #endif
 
-#if defined(WATCHDOG_SUPPORT)
+#if WATCHDOG_SUPPORT == 1
   wdtInit();// start watchdog
 #endif
 
@@ -71,28 +75,29 @@ void setup() {
   outPC.mcusr.word = 0;// arduino bootloader doesn't preserve MCUSR contents
 #endif
 
-  // configure test mode defaults
-  outPC.status0.bits.testModeEnabled = 0u;
-  testPage.testSetpoint = 0u;
-
   throttle.init(PID_SAMPLE_RATE_MS, throttleVars);
   loadFlashPage1ToThrottle(throttle);
-
   canSetup();
-
   adc::start();
 }
 
-void loop() {
-  wdt_reset();// throw watchdog a bone
-  const auto loopStartTimeUs = micros();
-
-  healthMonitor.run();
-  canLoop();
+void updateStatus() {
   outPC.status0.bits.msqRT_BCastListenFault = ! healthMonitor.getStatus().bits.ecuRtDataOkay;
-  if (outPC.status0.bits.testModeEnabled)
+
+  // update ADC status
+  outPC.adcStatus.schedIdx = adc::getSchedIdx();
+  outPC.adcStatus.state = static_cast<uint8_t>(adc::getState());
+  outPC.adcStatus.convCycles = adc::conversionCycles;
+  outPC.adcStatus.adcsra = ADCSRA;
+}
+
+void doTestMode() {
+}
+
+void throttleLoop() {
+  if (outPC.status1.bits.testModeEnabled)
   {
-    throttle.setSetpointOverride(EndianUtils::getBE(testPage.testSetpoint));
+    testController.run();
   }
   else
   {
@@ -100,18 +105,16 @@ void loop() {
       healthMonitor.getStatus().bits.ecuRtDataOkay ? ecu::idleDuty : 0u);
   }
   throttle.run();
+}
 
-  // update ADC status
-  outPC.adcStatus.schedIdx = adc::getSchedIdx();
-  outPC.adcStatus.state = static_cast<uint8_t>(adc::getState());
-  outPC.adcStatus.convCycles = adc::conversionCycles;
-  outPC.adcStatus.adcsra = ADCSRA;
+void loop() {
+  wdt_reset();// throw watchdog a bone
+  const auto loopStartTimeUs = micros();
 
-  DEBUG(
-    "seconds=%d; rpm=%d; idleDuty=%d;",
-    ecu::seconds,
-    ecu::rpm,
-    ecu::idleDuty);
+  healthMonitor.run();
+  updateStatus();
+  canLoop();
+  throttleLoop();
 
   // update loop time register
   const auto loopTimeUs = static_cast<uint16_t>(micros() - loopStartTimeUs);

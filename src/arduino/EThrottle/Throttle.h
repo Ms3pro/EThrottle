@@ -299,6 +299,8 @@ private:
 
 };
 
+extern Throttle throttle;
+
 // accessor utilities
 void
 loadFlashPage1ToThrottle(
@@ -306,4 +308,8 @@ loadFlashPage1ToThrottle(
 
 void
 storeThrottlePID_ToFlash(
+  Throttle &throttle);
+
+void
+restoreThrottleEnableFromInhibit(
   Throttle &throttle);
