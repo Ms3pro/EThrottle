@@ -28,7 +28,8 @@ public:
     Throttle     * throttle);
 
   void
-  run();
+  run(
+    const uint16_t dt_usec);
 
   inline const Status & getStatus() const {return status_;}
 
@@ -45,10 +46,7 @@ private:
 
   Status status_;
 
-  // micros() values at the time of last run() call
-  uint32_t lastRunMicros_ = 0u;
-
-  uint16_t microsAccum_ = 0u;
+  uint16_t accum_usec_ = 0u;// time accumulator
 
   // milliseconds since last doChecks() call
   uint16_t millisSinceLastDoChecks_ = 0u;

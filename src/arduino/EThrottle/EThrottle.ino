@@ -23,8 +23,14 @@ HealthMonitor healthMonitor(&canDev, &throttle);
 
 TestController testController;
 
+bool firstLoopPass = true;
+
+unsigned long prevLoopStartTime_usec = 0u;
+
 // setup watchdog
-void wdtInit() {
+void
+wdtInit()
+{
   cli();// disable interrupts
   wdt_reset();// reset watchdog
   wdt_enable(WDTO_15MS);// start watchdog timer with 15ms timeout
@@ -54,7 +60,9 @@ showResetCause(
   }
 }
 
-void setup() {
+void
+setup()
+{
 #if defined(MCP_CAN_BOOT_BL)
   // retrieves the MCU reset cause (MCUSR register) when using the
   // mcp-can-boot bootloader (https://github.com/crycode-de/mcp-can-boot).
@@ -81,7 +89,9 @@ void setup() {
   adc::start();
 }
 
-void updateStatus() {
+void
+updateStatus()
+{
   outPC.status0.bits.msqRT_BCastListenFault = ! healthMonitor.getStatus().bits.ecuRtDataOkay;
 
   // update ADC status
@@ -91,13 +101,13 @@ void updateStatus() {
   outPC.adcStatus.adcsra = ADCSRA;
 }
 
-void doTestMode() {
-}
-
-void throttleLoop() {
+void
+throttleLoop(
+  const uint16_t dt_usec)
+{
   if (outPC.status1.bits.testModeEnabled)
   {
-    testController.run();
+    testController.run(dt_usec);
   }
   else
   {
@@ -107,16 +117,21 @@ void throttleLoop() {
   throttle.run();
 }
 
-void loop() {
+void
+loop()
+{
   wdt_reset();// throw watchdog a bone
-  const auto loopStartTimeUs = micros();
+  const auto loopStartTime_usec = micros();
+  const auto dt_usec = static_cast<uint16_t>(firstLoopPass ? 0u : loopStartTime_usec - prevLoopStartTime_usec);
 
-  healthMonitor.run();
+  healthMonitor.run(dt_usec);
   updateStatus();
   canLoop();
-  throttleLoop();
+  throttleLoop(dt_usec);
 
   // update loop time register
-  const auto loopTimeUs = static_cast<uint16_t>(micros() - loopStartTimeUs);
-  EndianUtils::setBE(outPC.loopTimeUs, loopTimeUs);
+  const auto loopTime_usec = static_cast<uint16_t>(micros() - loopStartTime_usec);
+  EndianUtils::setBE(outPC.loopTimeUs, loopTime_usec);
+  prevLoopStartTime_usec = loopStartTime_usec;
+  firstLoopPass = false;
 }

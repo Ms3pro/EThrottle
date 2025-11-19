@@ -199,6 +199,8 @@
     tpsStall = "Minimum tps value that the engine can continue to run at.\nGoing below this tps value will cause the engine to stall."
     idleAddAuthority = "The maximum tps % that the idle logic can add to the tps target."
     msqRtBcastBaseId = "Megasquirt's base message identifier used for realtime data broadcasting (typically set to 1520)."
+    testSetpoint = "Throttle setpoint to target."
+    testPlaybackCount = "Number of times to playback the test curve (0 = indefinite)."
 
 [Menu]
 
@@ -448,9 +450,14 @@
         panel = testModeSingleButtons
 
     dialog = testModeCurveFields, "", yAxis
-        panel = ppsCompareCurvePreferA
+        field = "Playback Count", testPlaybackCount
+        panel = throttlePlaybackCurve
 
+    indicatorPanel = testModeCurveFaults, 1, {1}; 1 cols, enabled
+        indicator     = {status1_bits_testModeBadCurve},       "Curve OK",          "Curve Bad",          green,  black,  red,    black
+    
     dialog = testModeCurveButtons, "", yAxis
+        panel = testModeCurveFaults
         commandButton = "Start", cmdTestModeCurve, { status1_bits_testMode == 0 }
         commandButton = "Stop", cmdTestModeIdle, { status1_bits_testMode == 2 }
 
@@ -525,6 +532,14 @@
         xBins       = tpsCompCurve_xBins, tVars_tpsB
         yBins       = tpsCompCurve_yBins
         gauge       = tVars_tpsSafetyDeltaGauge
+
+    curve = throttlePlaybackCurve, "Throttle Playback Curve (Test Mode)"
+        columnLabel = "Time Offset", "Throttle Target" 
+        xAxis       = 0, 5000, 16
+        yAxis       = 0, 100, 16
+        xBins       = testPlaybackCurve_xBins, deadValue
+        yBins       = testPlaybackCurve_yBins
+        gauge       = deadValueGauge
 
 [TableEditor]
 

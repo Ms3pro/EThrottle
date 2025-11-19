@@ -13,26 +13,25 @@ HealthMonitor::HealthMonitor(
 }
 
 void
-HealthMonitor::run()
+HealthMonitor::run(
+    const uint16_t dt_usec)
 {
-  const auto microsNow = micros();
   if (status_.bits.firstRun)
   {
-    lastRunMicros_ = microsNow;
     status_.bits.firstRun = 0u;
     return;
   }
 
-  const auto delta_us = microsNow - lastRunMicros_;
-  microsAccum_ += delta_us;
-  millisSinceLastDoChecks_ += microsAccum_ / 1000u;
-  microsAccum_ %= 1000u;
+  accum_usec_ += dt_usec;
+  const uint16_t accum_ms = accum_usec_ / 1000u;
+  accum_usec_ -= accum_ms * 1000u;
+
+  millisSinceLastDoChecks_ += accum_ms;
   if (millisSinceLastDoChecks_ >= CHECK_INTERVAL_MS)
   {
     doChecks();
     millisSinceLastDoChecks_ = 0u;
   }
-  lastRunMicros_ = microsNow;
 }
 
 void
