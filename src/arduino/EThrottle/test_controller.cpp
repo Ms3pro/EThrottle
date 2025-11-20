@@ -6,6 +6,10 @@
 #include "Throttle.h"
 
 TestController::TestController()
+ : playLUT_(
+    testPage.testPlaybackCurve_xBins,
+    testPage.testPlaybackCurve_yBins,
+    TEST_PLAYBACK_CURVE_N_BINS)
 {
   outPC.status1.bits.testModeEnabled = 0u;
   outPC.status1.bits.testMode = static_cast<unsigned int>(TestModes::Idle);
@@ -139,7 +143,7 @@ TestController::tryPlaybackStart()
     accum_usec_ = 0u;
     playTimeOffset_ms_ = 0u;
     playCountsRemaining_ = testPage.testPlaybackCount;
-    throttle.setSetpointOverride(static_cast<uint16_t>(testPage.testPlaybackCurve_yBins[0]) * 100u);
+    throttle.setSetpointOverride(playLUT_.lerp(playTimeOffset_ms_) * 100u);
     throttle.enableThrottle();
 }
 
@@ -167,4 +171,6 @@ TestController::playbackRun(
       }
     }
   }
+
+  throttle.setSetpointOverride(playLUT_.lerp(playTimeOffset_ms_) * 100u);
 }

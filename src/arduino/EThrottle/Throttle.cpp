@@ -170,16 +170,16 @@ Throttle::setRangeCalTPS_B(
 
 void
 Throttle::setSensorSetup(
-  const SensorSetup            setup,
-  const FlashTableDescriptor & ppsCompDesc,
-  const FlashTableDescriptor & tpsCompDesc,
-  const uint16_t               ppsCompareThresh,
-  const uint16_t               tpsCompareThresh,
-  const uint16_t               tpsStall)
+  const SensorSetup setup,
+  const PPS_LUT_t & ppsLUT,
+  const TPS_LUT_t & tpsLUT,
+  const uint16_t    ppsCompareThresh,
+  const uint16_t    tpsCompareThresh,
+  const uint16_t    tpsStall)
 {
   sensorSetup_ = setup;
-  ppsCompDesc_ = ppsCompDesc;
-  tpsCompDesc_ = tpsCompDesc;
+  ppsCompLUT_ = ppsLUT;
+  tpsCompLUT_ = tpsLUT;
   ppsCompareThresh_ = ppsCompareThresh;
   tpsCompareThresh_ = tpsCompareThresh;
   tpsStall_ = tpsStall;
@@ -361,11 +361,7 @@ Throttle::doPedal()
 
     // lookup what we expect the other sensor's ADC value to be based
     // on the prefered sensor's reading.
-    const auto otherExpected = FlashUtils::lerpU16(
-      ppsCompDesc_.xBinsFlashOffset,
-      ppsCompDesc_.yBinsFlashOffset,
-      ppsCompDesc_.nBins,
-      preferADC);
+    const auto otherExpected = ppsCompLUT_.lerp(preferADC);
     ppsDelta_ = otherADC - otherExpected;
 
     // fault filtering logic
@@ -421,11 +417,7 @@ Throttle::doThrottle()
 
     // lookup what we expect the other sensor's ADC value to be based
     // on the prefered sensor's reading.
-    const auto otherExpected = FlashUtils::lerpU16(
-      tpsCompDesc_.xBinsFlashOffset,
-      tpsCompDesc_.yBinsFlashOffset,
-      tpsCompDesc_.nBins,
-      preferADC);
+    const auto otherExpected = tpsCompLUT_.lerp(preferADC);
     tpsDelta_ = otherADC - otherExpected;
 
     // fault filtering logic
@@ -654,20 +646,20 @@ loadFlashPage1ToThrottle(
   SensorSetupUnion setupU;
   setupU.word = EEPROM.read(FIELD_OFFSET_CFG_PAGE1(sensorSetup.word));
 
-  Throttle::FlashTableDescriptor ppsFTD;
-  ppsFTD.xBinsFlashOffset = FIELD_OFFSET_CFG_PAGE1(ppsCompCurve_xBins);
-  ppsFTD.yBinsFlashOffset = FIELD_OFFSET_CFG_PAGE1(ppsCompCurve_yBins);
-  ppsFTD.nBins = SENSOR_COMPARE_CURVE_N_BINS;
+  const auto ppsLUT = Throttle::PPS_LUT_t(
+    FIELD_OFFSET_CFG_PAGE1(ppsCompCurve_xBins),
+    FIELD_OFFSET_CFG_PAGE1(ppsCompCurve_yBins),
+    SENSOR_COMPARE_CURVE_N_BINS);
 
-  Throttle::FlashTableDescriptor tpsFTD;
-  tpsFTD.xBinsFlashOffset = FIELD_OFFSET_CFG_PAGE1(tpsCompCurve_xBins);
-  tpsFTD.yBinsFlashOffset = FIELD_OFFSET_CFG_PAGE1(tpsCompCurve_yBins);
-  tpsFTD.nBins = SENSOR_COMPARE_CURVE_N_BINS;
+  const auto tpsLUT = Throttle::TPS_LUT_t(
+    FIELD_OFFSET_CFG_PAGE1(tpsCompCurve_xBins),
+    FIELD_OFFSET_CFG_PAGE1(tpsCompCurve_yBins),
+    SENSOR_COMPARE_CURVE_N_BINS);
 
   throttle.setSensorSetup(
     setupU.bits,
-    ppsFTD,
-    tpsFTD,
+    ppsLUT,
+    tpsLUT,
     FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(ppsCompareThresh)),
     FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsCompareThresh)),
     FlashUtils::readBE<uint16_t>(FIELD_OFFSET_CFG_PAGE1(tpsStall)));

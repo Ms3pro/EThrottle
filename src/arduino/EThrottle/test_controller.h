@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include "FlashUtils.h"
+
 enum struct TestModes {
   Idle = 0,
   SingleSetpoint = 1,
@@ -39,6 +41,7 @@ private:
   uint16_t playTimeOffset_ms_ = 0u;
   uint16_t maxPlayTime_ms_ = 0u;
   uint8_t playCountsRemaining_ = 0u;
+  FlashUtils::RAM_LUT<uint16_t, uint8_t> playLUT_;
 
 };
 

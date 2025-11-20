@@ -2,6 +2,7 @@
 
 #include "EThrottleTables.h"
 #include "FaultFilter.h"
+#include "FlashUtils.h"
 #include <PID_v1.h>
 #include <stdint.h>
 #include <pidautotuner.h>
@@ -9,19 +10,14 @@
 class Throttle
 {
 public:
+  using PPS_LUT_t = FlashUtils::FlashLUT<uint16_t, uint16_t>;
+  using TPS_LUT_t = FlashUtils::FlashLUT<uint16_t, uint16_t>;
   static constexpr uint8_t MAX_IDLE_ADDER_AUTHORITY = 20u;
 
   enum struct SetpointSource
   {
     PPS = 0,
     User = 1
-  };
-
-  struct FlashTableDescriptor
-  {
-    uint16_t xBinsFlashOffset;
-    uint16_t yBinsFlashOffset;
-    uint8_t nBins;
   };
 
   enum struct FaultClearCmd
@@ -86,12 +82,12 @@ public:
 
   void
   setSensorSetup(
-    const SensorSetup            setup,
-    const FlashTableDescriptor & ppsCompDesc,
-    const FlashTableDescriptor & tpsCompDesc,
-    const uint16_t               ppsCompareThresh,
-    const uint16_t               tpsCompareThresh,
-    const uint16_t               tpsStall);
+    const SensorSetup setup,
+    const PPS_LUT_t & ppsLUT,
+    const TPS_LUT_t & tpsLUT,
+    const uint16_t    ppsCompareThresh,
+    const uint16_t    tpsCompareThresh,
+    const uint16_t    tpsStall);
   
   void
   setIdleAddAuthority(
@@ -277,8 +273,8 @@ private:
     uint16_t userSetpoint_ = 0u;
 
     SensorSetup sensorSetup_;
-    FlashTableDescriptor ppsCompDesc_;
-    FlashTableDescriptor tpsCompDesc_;
+    PPS_LUT_t ppsCompLUT_;
+    TPS_LUT_t tpsCompLUT_;
     // threshold used to compare the absolute value of the ADC
     // delta in the sensor comparison logic.
     uint16_t ppsCompareThresh_ = 20u;
