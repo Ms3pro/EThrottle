@@ -292,6 +292,8 @@ private:
     FaultFilter tpsFaultFilter_;
 
     uint8_t driverFaultCount_ = 0u;
+    uint16_t prevTPS_ = 0u;
+    int16_t TPSdot_ = 0u;
 
 };
 

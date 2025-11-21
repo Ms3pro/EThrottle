@@ -267,6 +267,7 @@ Throttle::run()
     outVars_->ppsCompFaultCount = ppsCompFaultCount_;
     outVars_->tpsCompFaultCount = tpsCompFaultCount_;
     outVars_->driverFaultCount = driverFaultCount_;
+    EndianUtils::setBE(outVars_->TPSdot, TPSdot_);
   }
 }
 
@@ -513,9 +514,9 @@ Throttle::doThrottle()
     motorCurrent_mA_ = 0u;
   }
 
-  // make sure ADC conversions are running correctly
   if (newCycle)
   {
+    // make sure ADC conversions are running correctly
     static uint16_t prevADC_Cycles = 0;
     const uint16_t deltaCycles = adc::conversionCycles - prevADC_Cycles;
     prevADC_Cycles = adc::conversionCycles;
@@ -524,6 +525,13 @@ Throttle::doThrottle()
       status_.adcStalled = 1;
       driverDisable();
     }
+
+    // compute TPS velocity in terms of %/s with no decimal precision.
+    const int16_t deltaTPS = static_cast<int16_t>(tps_) - static_cast<int16_t>(prevTPS_);
+    constexpr int16_t MS_PER_SEC = 1000;
+    constexpr int16_t TPS_SCALE = 100;// tps has 0.01 precision
+    TPSdot_ = (deltaTPS * (MS_PER_SEC / TPS_SCALE)) / pidSampleRate_ms_;
+    prevTPS_ = tps_;
   }
 
   // update motor driver fault status

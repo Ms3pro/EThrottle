@@ -80,6 +80,7 @@ uint16_t,driverFB,,,,motor driver current feedback ADC value (raw),,ADC,1,0,adcM
 uint8_t,ppsCompFaultCount,,,,PPS comparison fault counter (wraps),,,1,0,0,maxU08,,,,Status,PPS Comp Fault Count,-10,-10,10,20,0,0
 uint8_t,tpsCompFaultCount,,,,TPS comparison fault counter (wraps),,,1,0,0,maxU08,,,,Status,TPS Comp Fault Count,-10,-10,10,20,0,0
 uint8_t,driverFaultCount,,,,Motor driver fault counter (wraps),,,1,0,0,maxU08,,,,Status,Motor Driver Fault Count,-10,-10,10,20,0,0
+int16_t,TPSdot,,,,TPS delta over time,,%/s,1,0,-1500,1500,,1,TPS dot,Calculations,TPS dot,minS16,minS16,maxS16,maxS16,0,0
 ,,,,,,,,,,,,,,,,,,,,,,
 struct,RangeCalibration,,,,,,,,,,,,,,,,,,,,,
 uint16_t,min,,,,,,ADC,1,0,adcMin,adcMax,,,,,,,,,,,
