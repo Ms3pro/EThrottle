@@ -12,7 +12,11 @@ class Throttle
 public:
   using PPS_LUT_t = FlashUtils::FlashLUT<uint16_t, uint16_t>;
   using TPS_LUT_t = FlashUtils::FlashLUT<uint16_t, uint16_t>;
+  static constexpr uint8_t MAX_PID_PERIOD_MS = 100u;
+  static constexpr uint8_t MIN_PID_PERIOD_MS = 5u;
+  static constexpr uint8_t DEFAULT_PID_PERIOD_MS = 10u;
   static constexpr uint8_t MAX_IDLE_ADDER_AUTHORITY = 20u;
+  static constexpr uint16_t MAX_TPS = 10000u;
 
   enum struct SetpointSource
   {
@@ -41,7 +45,7 @@ public:
    */
   void
   init(
-    const uint8_t       pidSampleRate_ms,
+    const uint8_t       pidPeriod_ms,
     ThrottleOutVars_T * outVars);
 
   /**
@@ -104,7 +108,7 @@ public:
    */
   void
   setSetpointOverride(
-    uint16_t setpoint);
+    const uint16_t setpoint);
 
   const ThrottleStatus_T &
   status() const;
@@ -244,8 +248,8 @@ private:
     // status maintained in RAM
     ThrottleStatus_T status_;
 
-    // rate at which the PID algorith runs in milliseconds
-    uint8_t pidSampleRate_ms_ = 100u;
+    // period at which the PID algorith runs in milliseconds
+    uint8_t pidPeriod_ms_ = DEFAULT_PID_PERIOD_MS;
 
     // P,I, and D coefficient fed into the PID controller
     // to update this settings, call updatePID_Coeffs()

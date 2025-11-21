@@ -79,10 +79,21 @@ Throttle::Throttle(
 
 void
 Throttle::init(
-  const uint8_t       pidSampleRate_ms,
+  const uint8_t       pidPeriod_ms,
   ThrottleOutVars_T * outVars)
 {
-  pidSampleRate_ms_ = pidSampleRate_ms;
+  if (pidPeriod_ms > MAX_PID_PERIOD_MS)
+  {
+    pidPeriod_ms_ = MAX_PID_PERIOD_MS;
+  }
+  else if (pidPeriod_ms < MIN_PID_PERIOD_MS)
+  {
+    pidPeriod_ms_ = MIN_PID_PERIOD_MS;
+  }
+  else
+  {
+    pidPeriod_ms_ = pidPeriod_ms;
+  }
   outVars_ = outVars;
 
   pinMode(driverPinP_, OUTPUT);
@@ -108,9 +119,9 @@ Throttle::init(
   tuner_.setOutputRange(0, 255);
 #endif
 
-  pid_.SetSampleTime(pidSampleRate_ms_);
+  pid_.SetSampleTime(pidPeriod_ms_);
   tuner_.setZNMode(PIDAutotuner::ZNModeNoOvershoot);
-  tuner_.setLoopInterval(pidSampleRate_ms_ * 1000);
+  tuner_.setLoopInterval(pidPeriod_ms_ * 1000);
 }
 
 void
@@ -196,18 +207,14 @@ void
 Throttle::setIdleAddFactor(
   const uint16_t idleAddFactor)
 {
-  idleAddFactor_ = min(idleAddFactor, 10000u);
+  idleAddFactor_ = idleAddFactor > MAX_TPS ? MAX_TPS : idleAddFactor;
 }
 
 void
 Throttle::setSetpointOverride(
-  uint16_t setpoint)
+  const uint16_t setpoint)
 {
-  if (setpoint > 10000)
-  {
-    setpoint = 10000;
-  }
-  userSetpoint_ = setpoint;
+  userSetpoint_ = setpoint > MAX_TPS ? MAX_TPS : setpoint;
 }
 
 const ThrottleStatus_T &
@@ -351,8 +358,8 @@ Throttle::doPedal()
   ppsB_ = adc::ppsB.value;
 
   // normalize PPS readings based on calibrated min/max values
-  const auto ppsA_Norm = static_cast<uint16_t>(map(ppsA_, ppsCalA_.min, ppsCalA_.max, 0, 10000));
-  const auto ppsB_Norm = static_cast<uint16_t>(map(ppsB_, ppsCalB_.min, ppsCalB_.max, 0, 10000));
+  const auto ppsA_Norm = static_cast<uint16_t>(map(ppsA_, ppsCalA_.min, ppsCalA_.max, 0, MAX_TPS));
+  const auto ppsB_Norm = static_cast<uint16_t>(map(ppsB_, ppsCalB_.min, ppsCalB_.max, 0, MAX_TPS));
 
   // safety check the raw ADC values
   if (sensorSetup_.comparePPS)
@@ -394,8 +401,8 @@ Throttle::doPedal()
     // accelerator pedal.
     // Note: pps_ can get set to 0% if PPS safety checks fail.
     pps_ = (sensorSetup_.preferPPS_A ? ppsA_Norm : ppsB_Norm);
-    if (pps_ > 10000u) {
-      pps_ = 10000u;
+    if (pps_ > MAX_TPS) {
+      pps_ = MAX_TPS;
     }
   }
 }
@@ -407,8 +414,8 @@ Throttle::doThrottle()
   tpsB_ = adc::tpsB.value;
 
   // normalize TPS readings based on calibrated min/max values
-  const auto tpsA_Norm = static_cast<uint16_t>(map(tpsA_, tpsCalA_.min, tpsCalA_.max, 0, 10000));
-  const auto tpsB_Norm = static_cast<uint16_t>(map(tpsB_, tpsCalB_.min, tpsCalB_.max, 0, 10000));
+  const auto tpsA_Norm = static_cast<uint16_t>(map(tpsA_, tpsCalA_.min, tpsCalA_.max, 0, MAX_TPS));
+  const auto tpsB_Norm = static_cast<uint16_t>(map(tpsB_, tpsCalB_.min, tpsCalB_.max, 0, MAX_TPS));
 
   // safety check the raw ADC values
   if (sensorSetup_.compareTPS)
@@ -462,7 +469,7 @@ Throttle::doThrottle()
       case SetpointSource::PPS:
       {
         idleAdder_ = static_cast<uint32_t>(idleAddAuthority_) * idleAddFactor_ / 100u;
-        ppsAdder_ = (static_cast<int32_t>(10000 - tpsStall_ - idleAdder_) * pps_) / 10000;
+        ppsAdder_ = (static_cast<int32_t>(MAX_TPS - tpsStall_ - idleAdder_) * pps_) / MAX_TPS;
         tpsTarget_ = tpsStall_ + idleAdder_ + ppsAdder_;
         break;
       }
@@ -472,14 +479,15 @@ Throttle::doThrottle()
     }
 
     // clamp the tpsTarget_ within tpsStall_ and 100%
-    if (tpsTarget_ > 11000u)
+    constexpr auto TPS_110 = MAX_TPS + (MAX_TPS / 10u);// 110% in tps units
+    if (tpsTarget_ > TPS_110)
     {
       // >110% probably means we underflowed, so clamp to tpsStall_
       tpsTarget_ = tpsStall_;
     }
-    else if (tpsTarget_ > 10000u)
+    else if (tpsTarget_ > MAX_TPS)
     {
-      tpsTarget_ = 10000u;
+      tpsTarget_ = MAX_TPS;
     }
 
     pidSetpoint_ = static_cast<double>(tpsTarget_);
@@ -530,7 +538,7 @@ Throttle::doThrottle()
     const int16_t deltaTPS = static_cast<int16_t>(tps_) - static_cast<int16_t>(prevTPS_);
     constexpr int16_t MS_PER_SEC = 1000;
     constexpr int16_t TPS_SCALE = 100;// tps has 0.01 precision
-    TPSdot_ = (deltaTPS * (MS_PER_SEC / TPS_SCALE)) / pidSampleRate_ms_;
+    TPSdot_ = (deltaTPS * (MS_PER_SEC / TPS_SCALE)) / pidPeriod_ms_;
     prevTPS_ = tps_;
   }
 
