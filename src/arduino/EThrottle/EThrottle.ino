@@ -74,7 +74,7 @@ setup()
   wdtInit();// start watchdog
 #endif
 
-  setupLogging(115200);
+  SETUP_LOGGING(115200);
   INFO("WATCHDOG: %s", (WATCHDOG_SUPPORT ? "ON" : "OFF"));
 #ifdef MCP_CAN_BOOT_BL
   outPC.mcusr.word = mcusr;
