@@ -92,8 +92,10 @@
     ;
     ;----------------------------------------------------------------------------
 
-    pageActivationDelay = 250 ; Milliseconds delay after burn command.
-    blockReadTimeout    = 180 ; Milliseconds total timeout for reading page.
+    pageActivationDelay = 500 ; Milliseconds delay after burn command.
+                              ; Measured to take ~400ms to write 128bytes to flash
+    blockReadTimeout    = 5   ; Milliseconds total timeout for reading page.
+                              ; Measured to take ~600us to read 128bytes from flash
 
 
 
