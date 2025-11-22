@@ -12,7 +12,7 @@
 #include "Throttle.h"
 
 DECL_MEGA_CAN_REV("EThrottle");
-DECL_MEGA_CAN_SIG("OpenGPIO-1.0.0     ");
+DECL_MEGA_CAN_SIG("OpenGPIO-1.1.0     ");
 
 // toggle a pin on different CAN events
 #define ENABLE_CAN_STROBES  0 // global enable

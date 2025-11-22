@@ -159,7 +159,7 @@ uint8_t,word,,,,,,,,,,,,,,,,,,,,,
 struct,OutPC_T,,,,,OUT_PC,,,,,,,,,,,,,,,,
 uint8_t,canStatus,,,,,,,,,,,,,,,,,,,,,
 uint8_t,canErrorCount,,,,,,,1,0,0,maxU08,,,,X-Code dev,CAN Error Count,-1,-1,1,10,0,0
-uint16_t,loopTimeUs,,,,,,,1,0,0,1500,,,,X-Code dev,Mainloop Time,-1,-1,600,1000,0,0
+uint16_t,loopTimeUs,,,,,,us,1,0,0,1500,,,,X-Code dev,Mainloop Time,-1,-1,600,1000,0,0
 Status0_T,status0,,,,,,,,,,,,,,,,,,,,,
 Status1_T,status1,,,,,,,,,,,,,,,,,,,,,
 MCUSR_Status,mcusr,,,,,,,,,,,,,,,,,,,,,
