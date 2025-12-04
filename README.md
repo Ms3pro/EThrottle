@@ -1,7 +1,7 @@
 # Megasquirt Drive By Wire
 This repo contains source code and PCB design files for a Megasquirt Extended CAN device that controls a drive by wire throttle body.
 
-![block-diagram](/doc/block_diagram.svg)
+![system_block_diagram](/doc/system_block_diagram.svg)
 
 ## 🚧 Project Status Disclaimer
 
